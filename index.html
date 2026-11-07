@@ -3,1268 +3,149 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#140c33">
-<title>Tap Tap Party</title>
+<meta name="theme-color" content="#2a1863">
+<title>Tiny Taps</title>
 <style>
-  html, body {
-    margin: 0; height: 100%; overflow: hidden;
-    background: #140c33; overscroll-behavior: none;
+  html, body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; }
+  * { box-sizing: border-box; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: "Arial Rounded MT Bold", "Nunito", "Varela Round", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #fff; touch-action: manipulation;
+    background: radial-gradient(circle at 50% 30%, #4b2ab0 0%, #2a1863 55%, #160c3a 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3.5vh; padding: 16px;
   }
-  * {
-    box-sizing: border-box;
-    -webkit-user-select: none; user-select: none;
-    -webkit-touch-callout: none;
-    -webkit-tap-highlight-color: transparent;
+  /* drifting bubbles */
+  .bubbles { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+  .bubbles span {
+    position: absolute; bottom: -12vmin; border-radius: 50%;
+    border: .5vmin solid rgba(255,255,255,.35); background: rgba(255,255,255,.06);
+    animation: rise linear infinite;
   }
-  body { font-family: "Arial Rounded MT Bold", "Nunito", "Varela Round", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #fff; }
-  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; touch-action: none; }
+  @keyframes rise { to { transform: translateY(-120vh) translateX(4vmin); } }
 
-  /* ---------- Start screen ---------- */
-  #start {
-    position: fixed; inset: 0; z-index: 20;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4vh;
-    background: radial-gradient(circle at 50% 42%, #4b23a8 0%, #22125a 45%, #140c33 80%);
-    touch-action: none; text-align: center; padding: 16px;
+  h1 {
+    position: relative; z-index: 1; margin: 0; font-size: clamp(40px, 9vmin, 110px); letter-spacing: .03em;
+    filter: drop-shadow(0 .6vmin 0 rgba(0,0,0,.3));
   }
-  #start.hidden { display: none; }
-  #start h1 {
-    margin: 0; font-size: clamp(36px, 8vmin, 96px); letter-spacing: .02em;
-    background: linear-gradient(90deg, #ff5f6d, #ffc371, #f9f871, #6bf178, #4ad7ff, #a77bff, #ff7ad9);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    filter: drop-shadow(0 4px 0 rgba(0,0,0,.35));
+  h1 span { display: inline-block; animation: bob 1.8s ease-in-out infinite; }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-1.2vmin); } }
+
+  .cards { position: relative; z-index: 1; display: flex; gap: 4vmin; width: min(1500px, 100%); justify-content: center; }
+  .card {
+    position: relative; flex: 1 1 0; max-width: 680px; aspect-ratio: 4 / 3; border-radius: 5vmin; overflow: hidden;
+    text-decoration: none; color: #fff; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+    box-shadow: 0 1.6vmin 0 rgba(0,0,0,.28), 0 2.5vmin 6vmin rgba(0,0,0,.35);
+    transition: transform .12s ease; animation: float 3.2s ease-in-out infinite;
+    border: .7vmin solid rgba(255,255,255,.85);
   }
-  #play {
-    position: relative; width: min(40vmin, 360px); height: min(40vmin, 360px);
-    border: 0; padding: 0; border-radius: 50%; background: transparent; cursor: pointer;
-    animation: pulse 1.4s ease-in-out infinite; touch-action: none;
+  .card:nth-child(2) { animation-delay: -1.6s; }
+  .card:active { transform: scale(.95); }
+  @keyframes float { 0%,100% { translate: 0 0; } 50% { translate: 0 -1.2vmin; } }
+  .card .label {
+    position: relative; z-index: 2; margin-bottom: 4%; padding: .4em 1em; border-radius: 999px;
+    font-size: clamp(22px, 4.6vmin, 56px); font-weight: 800; background: rgba(0,0,0,.28);
+    -webkit-text-stroke: .15vmin rgba(0,0,0,.25);
   }
-  #play .ring {
-    position: absolute; inset: 0; border-radius: 50%;
+
+  /* --- Tap Tap Party card --- */
+  .party { background: radial-gradient(circle at 50% 42%, #5a2fd1, #24124f 75%); }
+  .party .swirl {
+    position: absolute; width: 62%; aspect-ratio: 1; top: 8%; left: 19%; border-radius: 50%;
     background: conic-gradient(#ff5f6d, #ffc371, #f9f871, #6bf178, #4ad7ff, #a77bff, #ff7ad9, #ff5f6d);
-    animation: spin 5s linear infinite;
-    box-shadow: 0 0 80px rgba(255,255,255,.35);
+    animation: spin 6s linear infinite; box-shadow: 0 0 8vmin rgba(255,255,255,.35);
   }
-  #play .face {
-    position: absolute; inset: 11%; border-radius: 50%; background: #fff;
-    display: flex; align-items: center; justify-content: center;
+  .party .swirl::after { content: ""; position: absolute; inset: 22%; border-radius: 50%; background: #2c1667; }
+  .party .buddy {
+    position: absolute; top: 25%; left: 50%; width: 26%; aspect-ratio: 1; translate: -50% 0; border-radius: 50%;
+    background: #ff6fb5; border: .6vmin solid #a3135f; animation: hop 1.2s ease-in-out infinite;
   }
-  #play svg { width: 48%; height: 48%; margin-left: 9%; }
-  #start .note {
-    max-width: 720px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    font-size: clamp(13px, 1.9vmin, 18px); line-height: 1.5; color: rgba(255,255,255,.72);
+  .party .buddy::before, .party .buddy::after {
+    content: ""; position: absolute; top: 28%; width: 26%; aspect-ratio: 1; border-radius: 50%;
+    background: radial-gradient(circle at 50% 55%, #1d1233 38%, #fff 40%);
   }
-  #start .note b { color: #fff; }
+  .party .buddy::before { left: 18%; } .party .buddy::after { right: 18%; }
+  .party .smile { position: absolute; left: 30%; top: 60%; width: 40%; height: 18%; border-bottom: .8vmin solid #1d1233; border-radius: 0 0 50% 50%; z-index: 1; }
+  .party .pop { position: absolute; width: 13%; animation: twinkle 1.6s ease-in-out infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+  @keyframes hop { 0%,100% { transform: translateY(0) scale(1.08,.92); } 50% { transform: translateY(-14%) scale(.95,1.05); } }
+  @keyframes twinkle { 0%,100% { transform: scale(.8) rotate(-10deg); opacity: .75; } 50% { transform: scale(1.15) rotate(10deg); opacity: 1; } }
 
-  /* ---------- Grown-up lock ---------- */
-  #lock {
-    position: fixed; top: 10px; right: 10px; z-index: 15; width: 64px; height: 64px;
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    background: rgba(255,255,255,.08); opacity: .45; touch-action: none;
-  }
-  #lock svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-  #lock .prog { fill: none; stroke: #fff; stroke-width: 5; stroke-linecap: round;
-    stroke-dasharray: 176; stroke-dashoffset: 176; transform: rotate(-90deg); transform-origin: 50% 50%; }
-  #lock.holding { opacity: 1; }
-  #lock.holding .prog { transition: stroke-dashoffset 2s linear; stroke-dashoffset: 0; }
+  /* --- Animal Sounds card --- */
+  .animals { background: linear-gradient(#5ec8ff 0%, #c9f0ff 52%, #7fd67a 52.5%, #3fa84a 100%); }
+  .animals .sun { position: absolute; top: 7%; left: 7%; width: 13%; aspect-ratio: 1; border-radius: 50%; background: #ffd43b; box-shadow: 0 0 0 1.4vmin rgba(255,224,102,.55); }
+  .animals .grid { position: absolute; inset: 9% 6% 26% 6%; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); place-items: center; }
+  .animals .grid img { width: 78%; max-height: 92%; object-fit: contain; animation: hop2 1.1s ease-in-out infinite; filter: drop-shadow(0 .6vmin 0 rgba(0,0,0,.18)); }
+  @keyframes hop2 { 0%,100% { transform: translateY(0) scale(1,1); } 20% { transform: translateY(0) scale(1.08,.92); } 50% { transform: translateY(-16%) scale(.96,1.05); } }
+  .animals .note { position: absolute; width: 9%; animation: twinkle 1.4s ease-in-out infinite; }
 
-  /* ---------- Grown-up panel ---------- */
-  #panel {
-    position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center;
-    background: rgba(8, 4, 24, .72); touch-action: none; padding: 16px;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  .foot { position: relative; z-index: 1; font: 13px system-ui, sans-serif; color: rgba(255,255,255,.6); text-align: center; }
+
+  @media (orientation: portrait) {
+    .cards { flex-direction: column; align-items: center; }
+    .card { width: min(88vw, 60vh); flex: none; }
   }
-  #panel[hidden] { display: none; }
-  #panel .card {
-    width: min(620px, 100%); background: #22184a; border-radius: 24px; padding: 28px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.5);
-  }
-  #panel h2 { margin: 0 0 18px; font-size: 26px; }
-  #panel .row { margin: 0 0 20px; }
-  #panel .label { font-size: 16px; color: rgba(255,255,255,.7); margin-bottom: 8px; }
-  #panel .seg { display: flex; gap: 8px; flex-wrap: wrap; }
-  #panel button {
-    flex: 1 1 0; min-width: 96px; min-height: 60px; font-size: 19px; font-weight: 600;
-    color: #fff; background: #3a2d72; border: 2px solid transparent; border-radius: 14px; cursor: pointer;
-  }
-  #panel button.on { background: #7b5cff; border-color: #c9bbff; }
-  #panel .actions { display: flex; gap: 10px; margin-top: 8px; }
-  #panel .actions button.primary { background: #2fbf71; }
 </style>
 </head>
 <body>
-<canvas id="c"></canvas>
+<div class="bubbles" id="bubbles"></div>
 
-<div id="start">
-  <h1>Tap Tap Party!</h1>
-  <button id="play" aria-label="Start playing">
-    <span class="ring"></span>
-    <span class="face">
-      <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M20 10 L90 50 L20 90 Z" fill="#7b5cff" stroke="#7b5cff" stroke-width="10" stroke-linejoin="round"/></svg>
-    </span>
-  </button>
-  <div class="note">
-    <b>Grown-ups:</b> tap the big button to start sound. Tap, swipe, press and hold,
-    use lots of fingers, and grab the little buddies. To change the volume or turn on calm mode,
-    <b>hold the lock in the top-right corner for 2 seconds</b>.
-    In a Tesla, the browser only works while the car is in Park.
-  </div>
+<h1 id="title">Tiny Taps</h1>
+
+<div class="cards">
+  <a class="card party" href="party.html" aria-label="Tap Tap Party">
+    <div class="swirl"></div>
+    <div class="buddy"><div class="smile"></div></div>
+    <img class="pop" data-art="2b50" style="top:10%;left:9%" alt="">
+    <img class="pop" data-art="1f496" style="top:14%;right:9%;animation-delay:-.5s" alt="">
+    <img class="pop" data-art="1f3b5" style="top:52%;left:12%;animation-delay:-1s" alt="">
+    <img class="pop" data-art="1f3b6" style="top:50%;right:12%;animation-delay:-.3s" alt="">
+    <div class="label">Tap Tap Party</div>
+  </a>
+  <a class="card animals" href="animals.html" aria-label="Animal Sounds">
+    <div class="sun"></div>
+    <div class="grid" id="animalGrid"></div>
+    <img class="note" data-art="1f3b5" style="top:6%;right:8%" alt="">
+    <div class="label">Animal Sounds</div>
+  </a>
 </div>
 
-<div id="lock" aria-label="Grown-up settings (hold)">
-  <svg viewBox="0 0 64 64" aria-hidden="true">
-    <circle class="prog" cx="32" cy="32" r="28"/>
-    <g fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="21" y="29" width="22" height="17" rx="3" fill="rgba(255,255,255,.15)"/>
-      <path d="M25 29v-5a7 7 0 0 1 14 0v5"/>
-    </g>
-  </svg>
-</div>
-
-<div id="panel" hidden>
-  <div class="card">
-    <h2>Grown-up settings</h2>
-    <div class="row">
-      <div class="label">Sound</div>
-      <div class="seg" id="volSeg">
-        <button data-vol="0">Off</button>
-        <button data-vol="0.3">Low</button>
-        <button data-vol="0.6">Medium</button>
-        <button data-vol="1">High</button>
-      </div>
-    </div>
-    <div class="row">
-      <div class="label">Calm mode (softer sound, no screen flashes, slower bubbles)</div>
-      <div class="seg" id="calmSeg">
-        <button data-calm="0">Off</button>
-        <button data-calm="1">On</button>
-      </div>
-    </div>
-    <div class="actions">
-      <button id="toStart">Start screen</button>
-      <button id="closePanel" class="primary">Done</button>
-    </div>
-  </div>
-</div>
+<div class="foot">Grown-ups: pick a game. Each game has a lock in the top-right corner (hold 2 seconds) with volume settings and a Home button.<br>
+Animal artwork: Twemoji by Twitter, Inc. and contributors, CC-BY 4.0</div>
 
 <script>
 (() => {
-'use strict';
+  /* Artwork: Twemoji (https://github.com/jdecked/twemoji), graphics licensed CC-BY 4.0. */
+  const ART = {"1f3b5":"<svg width=\"128\" height=\"128\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 36 36\"><path fill=\"#5DADEC\" d=\"M34.209.206L11.791 2.793C10.806 2.907 10 3.811 10 4.803v18.782C9.09 23.214 8.075 23 7 23c-3.865 0-7 2.685-7 6 0 3.314 3.135 6 7 6s7-2.686 7-6V10.539l18-2.077v13.124c-.91-.372-1.925-.586-3-.586-3.865 0-7 2.685-7 6 0 3.314 3.135 6 7 6s7-2.686 7-6V1.803c0-.992-.806-1.71-1.791-1.597z\"/></svg>","1f3b6":"<svg width=\"128\" height=\"128\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 36 36\"><path fill=\"#5DADEC\" d=\"M14.182.168L7.818 1.469C7.368 1.561 7 2.012 7 2.471v15.857C6.387 18.12 5.712 18 5 18c-2.762 0-5 1.741-5 3.889 0 2.147 2.238 3.889 5 3.889 2.713 0 4.908-1.683 4.985-3.777H10V6.477l4.182-.855c.45-.092.818-.543.818-1.002V.835c0-.459-.368-.76-.818-.667zm21 4l-6.363 1.301c-.451.092-.819.543-.819 1.002v15.857c-.613-.209-1.288-.328-2-.328-2.762 0-5 1.741-5 3.889 0 2.147 2.238 3.889 5 3.889 2.713 0 4.908-1.683 4.985-3.777H31V10.477l4.182-.855c.45-.092.818-.543.818-1.002V4.835c0-.459-.368-.76-.818-.667z\"/><path fill=\"#5DADEC\" d=\"M23.182 10.167l-6.363 1.301c-.451.093-.819.544-.819 1.003v15.857c-.613-.209-1.288-.328-2-.328-2.762 0-5 1.741-5 3.889s2.238 3.889 5 3.889c2.713 0 4.908-1.683 4.985-3.777H19V16.477l4.182-.855c.45-.092.818-.543.818-1.002v-3.785c0-.459-.368-.76-.818-.668z\"/></svg>","1f418":"<svg width=\"128\" height=\"128\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 36 36\"><path fill=\"#99AAB5\" d=\"M34.453 15.573c-.864-7.3-5.729-10.447-13.93-10.447-.391 0-.763.017-1.139.031-.013-.01-.022-.021-.035-.031C14.655 1.605 4.091 2.779 1.745 6.3c-3.255 4.883-1.174 22.3 0 24.646 1.173 2.35 4.694 3.521 5.868 2.35 1.174-1.176 0-1.176-1.173-3.521-.85-1.701-.466-5.859.255-8.471.028.168.068.322.1.486.39 2.871 1.993 7.412 1.993 9.744 0 3.564 2.102 4.107 4.694 4.107 2.593 0 4.695-.543 4.695-4.107 0-.24-.008-.463-.012-.695.757.064 1.535.107 2.359.107.497 0 .977-.016 1.448-.039-.004.209-.013.41-.013.627 0 3.564 2.103 4.107 4.694 4.107 2.593 0 4.695-.543 4.695-4.107 0-1.801 1.192-4.625 2.039-6.982.159-.354.291-.732.42-1.117.118 1.307.193 2.706.193 4.206 0 .553.447 1 1 1s1-.447 1-1c0-5.153-.771-9.248-1.547-12.068z\"/><path fill=\"#66757F\" d=\"M19.35 5.126S23 10.641 20 15.641c-3 5-7.838 5-11 5-2 0-1 2 0 2 1.414 0 8.395 1.211 12-6 3-6-1.65-11.515-1.65-11.515z\"/><circle fill=\"#292F33\" cx=\"6.5\" cy=\"14.141\" r=\"1.5\"/></svg>","1f42e":"<svg width=\"128\" height=\"128\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 36 36\"><path fill=\"#99AAB5\" d=\"M4 8s-4 2-4 11c0 0 6-1 7-3 0 0 2-12.25-3-8zm27.995.043s4 2 4 11c0 0-6-.999-7-2.999 0 0-2-12.251 3-8.001z\"/><path fill=\"#FFE8B6\" d=\"M1 1c-1.01.99 1 8 5 9s4-5 3-5C5 5 3.042-1 1 1zm34.297 0c1.011.99-1 8-5 9s-4-5-3-5c4 0 5.959-6 8-4z\"/><path fill=\"#CCD6DD\" d=\"M21.976 31h-7.951C8.488 31 4 26.512 4 20.976v-8.951C4 6.488 8.488 2 14.025 2h7.951C27.512 2 32 6.488 32 12.025v8.951C32 26.512 27.512 31 21.976 31z\"/><path fill=\"#E6AAAA\" d=\"M35 28c0 5.522-4.478 8-10 8H11c-5.523 0-10-2.478-10-8s4.477-10 10-10h14c5.522 0 10 4.478 10 10z\"/><ellipse fill=\"#C1694F\" cx=\"9.5\" cy=\"26\" rx=\"1.5\" ry=\"3\"/><ellipse fill=\"#C1694F\" cx=\"26.5\" cy=\"26\" rx=\"1.5\" ry=\"3\"/><path fill=\"#272B2B\" d=\"M11 12s0-2 2-2 2 2 2 2v2s0 2-2 2-2-2-2-2v-2zm10 0s0-2 2-2 2 2 2 2v2s0 2-2 2-2-2-2-2v-2z\"/></svg>","1f431":"<svg width=\"128\" height=\"128\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 36 36\"><path fill=\"#FFCC4D\" d=\"M32.348 13.999s3.445-8.812 1.651-11.998c-.604-1.073-8 1.998-10.723 5.442 0 0-2.586-.86-5.276-.86s-5.276.86-5.276.86C10.001 3.999 2.605.928 2.001 2.001.207 5.187 3.652 13.999 3.652 13.999c-.897 1.722-1.233 4.345-1.555 7.16-.354 3.086.35 5.546.658 6.089.35.617 2.123 2.605 4.484 4.306 3.587 2.583 8.967 3.445 10.761 3.445s7.174-.861 10.761-3.445c2.361-1.701 4.134-3.689 4.484-4.306.308-.543 1.012-3.003.659-6.089-.324-2.814-.659-5.438-1.556-7.16z\"/><path fill=\"#F18F26\" d=\"M2.359 2.971c.2-.599 5.348 2.173 6.518 5.404 0 0-3.808 2.624-4.528 4.624 0 0-2.99-7.028-1.99-10.028z\"/><path fill=\"#FFCC4D\" d=\"M5.98 7.261c0-1.414 5.457 2.733 4.457 3.733s-1.255.72-2.255 1.72S5.98 8.261 5.98 7.261z\"/><path fill=\"#F18F26\" d=\"M33.641 2.971c-.2-.599-5.348 2.173-6.518 5.404 0 0 3.808 2.624 4.528 4.624 0 0 2.99-7.028 1.99-10.028z\"/><path fill=\"#FFCC4D\" d=\"M30.02 7.261c0-1.414-5.457 2.733-4.457 3.733s1.255.72 2.255 1.72 2.202-4.453 2.202-5.453z\"/><path fill=\"#292F33\" d=\"M14.001 20.001c0 1.105-.896 1.999-2 1.999s-2-.894-2-1.999c0-1.104.896-1.999 2-1.999s2 .896 2 1.999zm11.998 0c0 1.105-.896 1.999-2 1.999-1.105 0-2-.894-2-1.999 0-1.104.895-1.999 2-1.999s2 .896 2 1.999z\"/><path fill=\"#FEE7B8\" d=\"M2.201 30.458c-.148 0-.294-.065-.393-.19-.171-.217-.134-.531.083-.702.162-.127 4.02-3.12 10.648-2.605.275.021.481.261.46.536-.021.275-.257.501-.537.46-6.233-.474-9.915 2.366-9.951 2.395-.093.07-.202.106-.31.106zm8.868-4.663c-.049 0-.1-.007-.149-.022-4.79-1.497-8.737-.347-8.777-.336-.265.081-.543-.07-.623-.335-.079-.265.071-.543.335-.622.173-.052 4.286-1.247 9.362.338.264.083.411.363.328.627-.066.213-.263.35-.476.35zm22.73 4.663c.148 0 .294-.065.393-.19.171-.217.134-.531-.083-.702-.162-.127-4.02-3.12-10.648-2.605-.275.021-.481.261-.46.536.022.275.257.501.537.46 6.233-.474 9.915 2.366 9.951 2.395.093.07.202.106.31.106zm-8.868-4.663c.049 0 .1-.007.149-.022 4.79-1.497 8.737-.347 8.777-.336.265.081.543-.07.623-.335.079-.265-.071-.543-.335-.622-.173-.052-4.286-1.247-9.362.338-.264.083-.411.363-.328.627.066.213.263.35.476.35z\"/><path fill=\"#67757F\" d=\"M24.736 30.898c-.097-.258-.384-.392-.643-.294-.552.206-1.076.311-1.559.311-1.152 0-1.561-.306-2.033-.659-.451-.338-.956-.715-1.99-.803v-2.339c0-.276-.224-.5-.5-.5s-.5.224-.5.5v2.373c-.81.115-1.346.439-1.816.743-.568.367-1.059.685-2.083.685-.482 0-1.006-.104-1.558-.311-.258-.095-.547.035-.643.294-.097.259.035.547.293.644.664.247 1.306.373 1.907.373 1.319 0 2.014-.449 2.627-.845.524-.339.98-.631 1.848-.635.992.008 1.358.278 1.815.621.538.403 1.147.859 2.633.859.601 0 1.244-.126 1.908-.373.259-.097.391-.385.294-.644z\"/><path fill=\"#E75A70\" d=\"M19.4 24.807h-2.8c-.64 0-1.163.523-1.163 1.163 0 .639.523 1.163 1.163 1.163h.237v.345c0 .639.523 1.163 1.163 1.163s1.163-.523 1.163-1.163v-.345h.237c.639 0 1.163-.523 1.163-1.163s-.524-1.163-1.163-1.163z\"/><path fill=\"#F18F26\" d=\"M18.022 17.154c-.276 0-.5-.224-.5-.5V8.37c0-.276.224-.5.5-.5s.5.224.5.5v8.284c0 .277-.223.5-.5.5zM21 15.572c-.276 0-.5-.224-.5-.5 0-2.882 1.232-5.21 1.285-5.308.13-.244.435-.334.677-.204.243.13.334.433.204.677-.012.021-1.166 2.213-1.166 4.835 0 .276-.224.5-.5.5zm-6 0c-.276 0-.5-.224-.5-.5 0-2.623-1.155-4.814-1.167-4.835-.13-.244-.038-.546.205-.677.242-.131.545-.039.676.204.053.098 1.285 2.426 1.285 5.308.001.276-.223.5-.499.5z\"/></svg>","1f436":"<svg width=\"128\" height=\"128\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 36 36\"><path fill=\"#DD2E44\" d=\"M15 27v6s0 3 3 3 3-3 3-3v-6h-6z\"/><path fill=\"#BE1931\" d=\"M15 33l.001.037c1.041-.035 2.016-.274 2.632-1.286.171-.281.563-.281.735 0 .616 1.011 1.591 1.251 2.632 1.286V27h-6v6z\"/><path fill=\"#D99E82\" d=\"M31.954 21.619c0 6.276-5 6.276-5 6.276h-18s-5 0-5-6.276c0-6.724 5-18.619 14-18.619s14 12.895 14 18.619z\"/><path fill=\"#F4C7B5\" d=\"M18 20c-7 0-10 3.527-10 6.395 0 3.037 2.462 5.5 5.5 5.5 1.605 0 3.042-.664 4.049-2.767.185-.386.716-.386.901 0 1.007 2.103 2.445 2.767 4.049 2.767 3.038 0 5.5-2.463 5.5-5.5C28 23.527 25 20 18 20z\"/><path fill=\"#292F33\" d=\"M15 22.895c-1 1 2 4 3 4s4-3 3-4-5-1-6 0zM13 19c-1.1 0-2-.9-2-2v-2c0-1.1.9-2 2-2s2 .9 2 2v2c0 1.1-.9 2-2 2zm10 0c-1.1 0-2-.9-2-2v-2c0-1.1.9-2 2-2s2 .9 2 2v2c0 1.1-.9 2-2 2z\"/><path fill=\"#662113\" d=\"M15 3.608C13.941 2.199 11.681.881 2.828 4.2-1.316 5.754.708 17.804 3.935 18.585c1.106 0 4.426 0 4.426-8.852 0-.22-.002-.423-.005-.625C10.35 6.298 12.5 4.857 15 3.608zm18.172.592C24.319.881 22.059 2.199 21 3.608c2.5 1.25 4.65 2.691 6.644 5.501-.003.201-.005.404-.005.625 0 8.852 3.319 8.852 4.426 8.852 3.227-.782 5.251-12.832 1.107-14.386z\"/><circle fill=\"#D99E82\" cx=\"23.5\" cy=\"25.5\" r=\".5\"/><circle fill=\"#D99E82\" cx=\"11.5\" cy=\"25.5\" r=\".5\"/><circle fill=\"#D99E82\" cx=\"25.5\" cy=\"27.5\" r=\".5\"/><circle fill=\"#D99E82\" cx=\"10.5\" cy=\"27.5\" r=\".5\"/><circle fill=\"#D99E82\" cx=\"23\" cy=\"28\" r=\"1\"/><circle fill=\"#D99E82\" cx=\"13\" cy=\"28\" r=\"1\"/><path fill=\"#380F09\" d=\"M9.883 7.232c-.259-.673-.634-1.397-1.176-1.939-.391-.391-1.023-.391-1.414 0s-.391 1.023 0 1.414c.57.57 1.066 1.934 1.068 2.346.145-.404.839-1.15 1.522-1.821zm16.217 0c.259-.672.634-1.397 1.176-1.939.391-.391 1.023-.391 1.414 0s.391 1.023 0 1.414c-.57.57-1.066 1.934-1.068 2.346-.145-.404-.839-1.15-1.522-1.821z\"/></svg>","1f437":"<svg width=\"128\" height=\"128\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 36 36\"><path fill=\"#F4ABBA\" d=\"M34.193 13.329c.387-.371.733-.795 1.019-1.28 1.686-2.854.27-10.292-.592-10.8-.695-.411-5.529 1.05-8.246 3.132C23.876 2.884 21.031 2 18 2c-3.021 0-5.856.879-8.349 2.367C6.93 2.293 2.119.839 1.424 1.249c-.861.508-2.276 7.947-.592 10.8.278.471.615.884.989 1.249C.666 15.85 0 18.64 0 21.479 0 31.468 8.011 34 18 34s18-2.532 18-12.521c0-2.828-.66-5.606-1.807-8.15z\"/><path fill=\"#EA596E\" d=\"M7.398 5.965c-2.166-1.267-4.402-2.08-4.8-1.845-.57.337-1.083 4.998-.352 8.265 1.273-2.483 3.04-4.682 5.152-6.42zm26.355 6.419c.733-3.267.219-7.928-.351-8.265-.398-.235-2.635.578-4.801 1.845 2.114 1.739 3.88 3.938 5.152 6.42zM28 23.125c0 4.487-3.097 9.375-10 9.375-6.904 0-10-4.888-10-9.375S11.096 17.5 18 17.5c6.903 0 10 1.138 10 5.625z\"/><path fill=\"#662113\" d=\"M15 24.6c0 1.857-.34 2.4-1.5 2.4s-1.5-.543-1.5-2.4c0-1.856.34-2.399 1.5-2.399s1.5.542 1.5 2.399zm9 0c0 1.857-.34 2.4-1.5 2.4s-1.5-.543-1.5-2.4c0-1.856.34-2.399 1.5-2.399s1.5.542 1.5 2.399z\"/><circle fill=\"#292F33\" cx=\"7\" cy=\"17\" r=\"2\"/><circle fill=\"#292F33\" cx=\"29\" cy=\"17\" r=\"2\"/></svg>","1f438":"<svg width=\"128\" height=\"128\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 36 36\"><path fill=\"#C6E5B3\" d=\"M36 22c0 7.456-8.059 12-18 12S0 29.456 0 22 8.059 7 18 7s18 7.544 18 15z\"/><path fill=\"#77B255\" d=\"M31.755 12.676C33.123 11.576 34 9.891 34 8c0-3.313-2.687-6-6-6-2.861 0-5.25 2.004-5.851 4.685-1.288-.483-2.683-.758-4.149-.758-1.465 0-2.861.275-4.149.758C13.25 4.004 10.861 2 8 2 4.687 2 2 4.687 2 8c0 1.891.877 3.576 2.245 4.676C1.6 15.356 0 18.685 0 22c0 7.456 8.059 1 18 1s18 6.456 18-1c0-3.315-1.6-6.644-4.245-9.324z\"/><circle fill=\"#FFF\" cx=\"7.5\" cy=\"7.5\" r=\"3.5\"/><circle fill=\"#292F33\" cx=\"7.5\" cy=\"7.5\" r=\"1.5\"/><circle fill=\"#FFF\" cx=\"28.5\" cy=\"7.5\" r=\"3.5\"/><circle fill=\"#292F33\" cx=\"28.5\" cy=\"7.5\" r=\"1.5\"/><circle fill=\"#5C913B\" cx=\"14\" cy=\"20\" r=\"1\"/><circle fill=\"#5C913B\" cx=\"22\" cy=\"20\" r=\"1\"/></svg>","1f496":"<svg width=\"128\" height=\"128\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 36 36\"><path fill=\"#DD2E44\" d=\"M35.885 11.833c0-5.45-4.418-9.868-9.867-9.868-3.308 0-6.227 1.633-8.018 4.129-1.791-2.496-4.71-4.129-8.017-4.129-5.45 0-9.868 4.417-9.868 9.868 0 .772.098 1.52.266 2.241C1.751 22.587 11.216 31.568 18 34.034c6.783-2.466 16.249-11.447 17.617-19.959.17-.721.268-1.469.268-2.242z\"/><path fill=\"#FDCB58\" d=\"M34.347 23.894l-3.824-1.416-1.416-3.824c-.145-.394-.52-.654-.938-.654-.418 0-.793.26-.938.653l-1.416 3.824-3.824 1.416c-.393.144-.653.519-.653.938 0 .418.261.793.653.938l3.824 1.416 1.416 3.824c.145.393.52.653.938.653.418 0 .793-.261.938-.653l1.416-3.824 3.824-1.416c.392-.145.653-.52.653-.938 0-.418-.261-.793-.653-.937zm-23-16.001l-2.365-.875-.875-2.365C7.961 4.26 7.587 4 7.169 4c-.419 0-.793.26-.938.653l-.876 2.365-2.364.875c-.393.146-.653.52-.653.938 0 .418.26.792.653.938l2.365.875.875 2.365c.146.393.52.653.938.653.418 0 .792-.26.938-.653l.875-2.365 2.365-.875c.393-.146.653-.519.653-.938 0-.418-.26-.792-.653-.938z\"/></svg>","1f981":"<svg width=\"128\" height=\"128\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 36 36\"><path fill=\"#662113\" d=\"M32.325 10.958s2.315.024 3.511 1.177c-.336-4.971-2.104-8.249-5.944-10.13-3.141-1.119-6.066 1.453-6.066 1.453s.862-1.99 2.19-2.746C23.789.236 21.146 0 18 0c-3.136 0-5.785.227-8.006.701 1.341.745 2.215 2.758 2.215 2.758S9.194.803 6 2.053C2.221 3.949.481 7.223.158 12.174c1.183-1.19 3.55-1.215 3.55-1.215S-.105 13.267.282 16.614c.387 2.947 1.394 5.967 2.879 8.722C3.039 22.15 5.917 20 5.917 20s-2.492 5.96-.581 8.738c1.935 2.542 4.313 4.641 6.976 5.916-.955-1.645-.136-3.044-.103-2.945.042.125.459 3.112 2.137 3.743 1.178.356 2.4.548 3.654.548 1.292 0 2.55-.207 3.761-.583 1.614-.691 2.024-3.585 2.064-3.708.032-.098.843 1.287-.09 2.921 2.706-1.309 5.118-3.463 7.064-6.073 1.699-2.846-.683-8.557-.683-8.557s2.85 2.13 2.757 5.288c1.556-2.906 2.585-6.104 2.911-9.2-.035-3.061-3.459-5.13-3.459-5.13z\"/><path fill=\"#FFCC4D\" d=\"M13.859 9.495c.596 2.392.16 4.422-2.231 5.017-2.392.596-6.363.087-6.958-2.304-.596-2.392.469-5.39 1.81-5.724 1.341-.334 6.784.62 7.379 3.011zm9.104 18.432c0 2.74-2.222 4.963-4.963 4.963s-4.963-2.223-4.963-4.963c0-2.741 2.223-4.964 4.963-4.964 2.741 0 4.963 2.222 4.963 4.964z\"/><path fill=\"#DD2E44\" d=\"M21.309 27.927c0 1.827-1.481 3.309-3.309 3.309s-3.309-1.481-3.309-3.309c0-1.827 1.481-3.31 3.309-3.31s3.309 1.483 3.309 3.31z\"/><path fill=\"#E6AAAA\" d=\"M11.052 8.997c.871 1.393.447 3.229-.946 4.1-1.394.871-2.608.797-3.479-.596-.871-1.394-.186-4.131.324-4.45.51-.319 3.23-.448 4.101.946z\"/><path fill=\"#FFCC4D\" d=\"M22.141 9.495c-.596 2.392-.159 4.422 2.232 5.017 2.392.596 6.363.087 6.959-2.304.596-2.392-.47-5.39-1.811-5.724-1.342-.334-6.786.62-7.38 3.011z\"/><path fill=\"#E6AAAA\" d=\"M24.948 8.997c-.871 1.393-.447 3.229.945 4.1 1.394.871 2.608.797 3.479-.596.871-1.394.185-4.131-.324-4.45-.51-.319-3.229-.448-4.1.946z\"/><path fill=\"#FFCC4D\" d=\"M18 7.125h-.002C5.167 7.126 7.125 12.083 8.5 18.667 9.875 25.25 10.384 27 10.384 27h15.228s.51-1.75 1.885-8.333C28.872 12.083 30.829 7.126 18 7.125z\"/><path fill=\"#272B2B\" d=\"M12 16s0-1.5 1.5-1.5S15 16 15 16v1.5s0 1.5-1.5 1.5-1.5-1.5-1.5-1.5V16zm9 0s0-1.5 1.5-1.5S24 16 24 16v1.5s0 1.5-1.5 1.5-1.5-1.5-1.5-1.5V16z\"/><path fill=\"#FFE8B6\" d=\"M20.168 21.521c-1.598 0-1.385.848-2.168 2.113-.783-1.266-.571-2.113-2.168-2.113-6.865 0-6.837.375-6.865 2.828-.058 4.986 2.802 6.132 5.257 6.06 1.597-.048 2.994-.88 3.777-2.131.783 1.251 2.179 2.083 3.776 2.131 2.455.072 5.315-1.073 5.257-6.06-.029-2.453-.001-2.828-6.866-2.828z\"/><path fill=\"#272B2B\" d=\"M14.582 21.411c-1.14.233 2.279 4.431 3.418 4.431s4.559-4.198 3.419-4.431c-1.14-.232-5.698-.232-6.837 0z\"/><circle fill=\"#D99E82\" cx=\"11.5\" cy=\"24.5\" r=\".5\"/><circle fill=\"#D99E82\" cx=\"10.5\" cy=\"26.5\" r=\".5\"/><circle fill=\"#D99E82\" cx=\"12.5\" cy=\"27.5\" r=\".5\"/><circle fill=\"#D99E82\" cx=\"24.5\" cy=\"24.5\" r=\".5\"/><circle fill=\"#D99E82\" cx=\"25.5\" cy=\"26.5\" r=\".5\"/><circle fill=\"#D99E82\" cx=\"23.5\" cy=\"27.5\" r=\".5\"/></svg>","1f986":"<svg width=\"128\" height=\"128\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 36 36\"><path fill=\"#D99E82\" d=\"M12.75 17.75c1.226 2.195 1.856-1.361 9.312-2.625s13.729 4.454 13.859 5.413c.132.958-4.447 9.462-9.462 9.462H10.75c-4.143 0-7.022-7.224-4-11.438 0 0 4.5-3.5 6-.812z\"/><path fill=\"#C1694F\" d=\"M13.008 18.136C8.02 25.073 6.969 30 10.75 30c-4.143 0-6.578-6.188-4.468-11.031.463-1.064 1.758-2.492 1.758-2.492l4.179-.008c.162.32.599 1.365.789 1.667z\"/><path fill=\"#E1E8ED\" d=\"M20.062 22.75c6.672-2.682 15.729-3.171 15.859-2.212.132.958-4.447 9.462-9.462 9.462H11.813c-4.143 0 1.232-4.429 8.249-7.25z\"/><path fill=\"#292F33\" d=\"M25.359 21.125c6-1.312 10.468-1.282 10.563-.587.079.578-1.559 3.907-3.973 6.454 2.204-2.804 1.42-6.113-6.59-5.867z\"/><path fill=\"#3E721D\" d=\"M7.125 6.125c1.562-4.938 10.44-4.143 10.062.688-.378 4.829-6.453 7.859-4.179 11.323-1.586 1.38-5.016.913-6.727.833.702-1.351 1.381-2.631 1.812-3.406 2.916-5.235-2.131-5.764-.968-9.438z\"/><path fill=\"#FFCC4D\" d=\"M1.893 9.045c.568-1.1.549.106 3.352.142 1.554.021 1.463-.56 1.664-1.621.041-.223.776 1.616 2.061 1.807 3.554.531 1.879 1.94 0 2.261-.901.154-2.01.318-3.938.155-2.519-.212-3.768-1.528-3.139-2.744z\"/><path fill=\"#F5F8FA\" d=\"M12.502 16.625c.044.625.506 1.511.506 1.511-1.016 1.474-5.643 3.017-7.354 2.93.096-.628.283-1.362.627-2.097 1.844-.471 4.661-1.071 6.221-2.344z\"/><path fill=\"#292F33\" d=\"M11.708 6.151c0 .716-.58 1.296-1.296 1.296s-1.295-.58-1.295-1.296c0-.716.579-1.295 1.295-1.295s1.296.58 1.296 1.295z\"/></svg>","2b50":"<svg width=\"128\" height=\"128\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 36 36\"><path fill=\"#FFAC33\" d=\"M27.287 34.627c-.404 0-.806-.124-1.152-.371L18 28.422l-8.135 5.834c-.693.496-1.623.496-2.312-.008-.689-.499-.979-1.385-.721-2.194l3.034-9.792-8.062-5.681c-.685-.505-.97-1.393-.708-2.203.264-.808 1.016-1.357 1.866-1.363L12.947 13l3.179-9.549c.268-.809 1.023-1.353 1.874-1.353.851 0 1.606.545 1.875 1.353L23 13l10.036.015c.853.006 1.606.556 1.867 1.363.263.81-.022 1.698-.708 2.203l-8.062 5.681 3.034 9.792c.26.809-.033 1.695-.72 2.194-.347.254-.753.379-1.16.379z\"/></svg>"};
+  const url = (code) => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(ART[code]);
 
-/* =====================================================================
-   Helpers
-   ===================================================================== */
-const TAU = Math.PI * 2;
-const rand = (a, b) => a + Math.random() * (b - a);
-const pick = (arr) => arr[(Math.random() * arr.length) | 0];
-const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
-const easeOut = (t) => 1 - Math.pow(1 - t, 3);
-const easeOutBack = (t) => { const c1 = 2.0, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
-const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-function sweep(arr, fn) { let j = 0; for (let i = 0; i < arr.length; i++) { const o = arr[i]; if (fn(o)) arr[j++] = o; } arr.length = j; }
+  document.querySelectorAll('[data-art]').forEach(im => { im.src = url(im.dataset.art); });
 
-/* =====================================================================
-   Settings (saved per browser)
-   ===================================================================== */
-const settings = { volume: 0.6, calm: false };
-try { Object.assign(settings, JSON.parse(localStorage.getItem('ttp-settings') || '{}')); } catch (e) {}
-function saveSettings() { try { localStorage.setItem('ttp-settings', JSON.stringify(settings)); } catch (e) {} }
-
-/* =====================================================================
-   Audio: everything is synthesized with Web Audio. All melodic sounds
-   use a pentatonic scale, so any mash of notes sounds pleasant.
-   ===================================================================== */
-const PENTA = [0, 2, 4, 7, 9];
-const NOTE_COUNT = 13;                  // C4 .. E6
-function noteFreq(i) {
-  const oct = Math.floor(i / 5), deg = ((i % 5) + 5) % 5;
-  return 261.63 * Math.pow(2, (PENTA[deg] + 12 * oct) / 12);
-}
-
-let ac = null, master = null, bus = null, noiseBuf = null;
-let nodeCount = 0, contCount = 0;
-const MAX_NODES = 42, MAX_CONT = 6;
-
-function initAudio() {
-  if (ac) { if (ac.state !== 'running') ac.resume(); return; }
-  const AC = window.AudioContext || window.webkitAudioContext;
-  if (!AC) return;
-  try { ac = new AC({ latencyHint: 'interactive' }); } catch (e) { ac = new AC(); }
-
-  const comp = ac.createDynamicsCompressor();
-  comp.threshold.value = -20; comp.knee.value = 10; comp.ratio.value = 10;
-  comp.attack.value = 0.003; comp.release.value = 0.2;
-  master = ac.createGain(); master.gain.value = 0;
-  master.connect(comp); comp.connect(ac.destination);
-
-  bus = ac.createGain(); bus.connect(master);
-  const rev = ac.createConvolver(); rev.buffer = makeImpulse(2.4);
-  const wet = ac.createGain(); wet.gain.value = 0.28;
-  bus.connect(wet); wet.connect(rev); rev.connect(master);
-
-  noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
-  const d = noiseBuf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-
-  // Unlock trick for picky browsers
-  const s = ac.createBufferSource(); s.buffer = ac.createBuffer(1, 1, 22050); s.connect(ac.destination); s.start(0);
-  if (ac.state !== 'running') ac.resume();
-  applyVolume();
-}
-function applyVolume() {
-  if (!ac) return;
-  const v = settings.volume * (settings.calm ? 0.55 : 1) * 0.85;
-  master.gain.setTargetAtTime(v, ac.currentTime, 0.05);
-}
-function makeImpulse(sec) {
-  const len = Math.floor(ac.sampleRate * sec), buf = ac.createBuffer(2, len, ac.sampleRate);
-  for (let ch = 0; ch < 2; ch++) {
-    const d = buf.getChannelData(ch);
-    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2);
-  }
-  return buf;
-}
-const audioOK = () => ac && ac.state === 'running' && settings.volume > 0 && nodeCount < MAX_NODES;
-
-function tone(f, o = {}) {
-  if (!audioOK()) return;
-  const t = ac.currentTime + (o.when || 0), dur = o.dur || 0.5, vol = o.vol == null ? 0.2 : o.vol, att = o.attack || 0.006;
-  const osc = ac.createOscillator(); osc.type = o.type || 'sine';
-  osc.frequency.setValueAtTime(f, t);
-  if (o.slide) osc.frequency.exponentialRampToValueAtTime(o.slide, t + (o.slideTime || dur));
-  const g = ac.createGain();
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(vol, t + att);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  if (o.vib) {
-    const l = ac.createOscillator(), lg = ac.createGain();
-    l.frequency.value = o.vib; lg.gain.value = o.vibDepth || f * 0.03;
-    l.connect(lg); lg.connect(osc.frequency); l.start(t); l.stop(t + dur + 0.05);
-  }
-  osc.connect(g); g.connect(bus);
-  osc.start(t); osc.stop(t + dur + 0.05);
-  nodeCount++; osc.onended = () => { nodeCount--; g.disconnect(); };
-}
-function noise(o = {}) {
-  if (!audioOK()) return;
-  const t = ac.currentTime + (o.when || 0), dur = o.dur || 0.2;
-  const src = ac.createBufferSource(); src.buffer = noiseBuf;
-  const filt = ac.createBiquadFilter(); filt.type = o.filter || 'bandpass';
-  filt.frequency.setValueAtTime(o.freq || 1000, t); filt.Q.value = o.q || 1;
-  if (o.sweep) filt.frequency.exponentialRampToValueAtTime(o.sweep, t + dur);
-  const g = ac.createGain();
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(o.vol || 0.2, t + (o.attack || 0.005));
-  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  src.connect(filt); filt.connect(g); g.connect(bus);
-  src.start(t, Math.random() * 0.5, dur + 0.05);
-  nodeCount++; src.onended = () => { nodeCount--; g.disconnect(); };
-}
-
-/* A held, continuously changing voice (swipe "slide whistle", balloon squeak) */
-function contVoice(kind) {
-  if (!ac || ac.state !== 'running' || settings.volume <= 0 || contCount >= MAX_CONT) return null;
-  contCount++;
-  const t = ac.currentTime;
-  const g = ac.createGain(); g.gain.value = 0; g.connect(bus);
-  const o = ac.createOscillator(); o.type = kind === 'squeak' ? 'square' : 'triangle';
-  const sub = ac.createOscillator(); sub.type = 'sine';
-  const filt = ac.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = kind === 'squeak' ? 1400 : 2600;
-  const lfo = ac.createOscillator(); lfo.frequency.value = kind === 'squeak' ? 16 : 5.5;
-  const lg = ac.createGain(); lg.gain.value = kind === 'squeak' ? 18 : 7;
-  lfo.connect(lg); lg.connect(o.frequency); lg.connect(sub.frequency);
-  o.connect(filt); sub.connect(filt); filt.connect(g);
-  const subRatio = kind === 'squeak' ? 1.01 : 0.5;   // squeak: chorus-y detune; slide: octave below
-  sub.frequency.value = 220; o.frequency.value = 440;
-  [o, sub, lfo].forEach(n => n.start(t));
-  let stopped = false;
-  return {
-    set(freq, vol) {
-      if (stopped) return;
-      const now = ac.currentTime;
-      o.frequency.setTargetAtTime(freq, now, 0.025);
-      sub.frequency.setTargetAtTime(freq * subRatio, now, 0.025);
-      g.gain.setTargetAtTime(vol, now, 0.05);
-    },
-    stop() {
-      if (stopped) return; stopped = true; contCount--;
-      const now = ac.currentTime;
-      g.gain.cancelScheduledValues(now);
-      g.gain.setTargetAtTime(0, now, 0.07);
-      [o, sub, lfo].forEach(n => n.stop(now + 0.6));
-      o.onended = () => g.disconnect();
-    }
-  };
-}
-
-const SFX = {
-  bell(i, when = 0, vol = 0.22) {
-    const f = noteFreq(i);
-    tone(f, { dur: 1.3, vol, when });
-    tone(f * 2, { dur: 0.5, vol: vol * 0.3, when });
-    tone(f * 3.01, { dur: 0.22, vol: vol * 0.12, when, type: 'triangle' });
-  },
-  bubblePop(size = 1) {
-    const f = rand(380, 620) / size;
-    tone(f, { slide: f * 3.2, slideTime: 0.07, dur: 0.1, vol: 0.28 });
-    noise({ freq: 3000, q: 0.8, dur: 0.04, vol: 0.08 });
-  },
-  bigPop() {
-    noise({ filter: 'lowpass', freq: 4000, sweep: 200, dur: 0.35, vol: 0.55 });
-    tone(170, { slide: 45, dur: 0.3, vol: 0.4 });
-    SFX.bell(rand(7, 12) | 0, 0.08, 0.16);
-  },
-  boing() { tone(140, { slide: 460, slideTime: 0.28, dur: 0.55, vol: 0.24, type: 'triangle', vib: 14, vibDepth: 35 }); },
-  giggle() {
-    const base = rand(520, 720);
-    for (let k = 0; k < 5; k++) {
-      const f = base * (1 + k * 0.07) * (k % 2 ? 1.1 : 1);
-      tone(f, { when: k * 0.09, slide: f * 1.4, slideTime: 0.06, dur: 0.085, vol: 0.15, type: 'triangle' });
-    }
-  },
-  whee() { tone(300, { slide: 1100, slideTime: 0.5, dur: 0.6, vol: 0.14, type: 'triangle', vib: 7, vibDepth: 20 }); },
-  whoosh() { noise({ freq: 300, sweep: 4200, q: 1.4, dur: 0.45, vol: 0.28, attack: 0.08 }); },
-  thud(v) { tone(120, { slide: 55, dur: 0.16, vol: 0.12 * v }); },
-  boom(when = 0) {
-    noise({ filter: 'lowpass', freq: 900, sweep: 80, dur: 0.8, vol: 0.45, when });
-    tone(95, { slide: 35, dur: 0.6, vol: 0.3, when });
-    for (let k = 0; k < 8; k++) noise({ filter: 'highpass', freq: 4500, dur: 0.03, vol: rand(0.04, 0.1), when: when + 0.15 + Math.random() * 0.7 });
-  },
-  shimmer() { [5, 7, 9, 10, 12].forEach((n, k) => SFX.bell(n, k * 0.05, 0.12)); },
-  fanfare() { [0, 2, 4, 5, 7, 9, 10, 12].forEach((n, k) => SFX.bell(n, k * 0.075, 0.17)); }
-};
-
-/* =====================================================================
-   Canvas & world
-   ===================================================================== */
-const cv = document.getElementById('c');
-const cx = cv.getContext('2d');
-let W = 0, H = 0, S = 0, DPR = 1, floorY = 0;
-let T = 0, lastInteract = 0, bgHue = 250, bgHueTarget = 250;
-
-const parts = [], shapes = [], rings = [], bubbles = [], balloons = [], comets = [], ribbons = [], timers = [];
-const buddies = [];
-const pointers = new Map();
-const MAXP = 900;
-let flash = 0, flashHue = 0;
-
-const bgStars = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random() * 0.85, r: rand(0.6, 2.2), ph: rand(0, TAU), sp: rand(1, 3) }));
-
-function resize() {
-  DPR = Math.min(window.devicePixelRatio || 1, 2);
-  W = window.innerWidth; H = window.innerHeight; S = Math.min(W, H);
-  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
-  cx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  floorY = H - S * 0.06;
-  for (const b of buddies) {
-    b.r = S * 0.08 * b.size;
-    b.x = clamp(b.x, b.r, W - b.r);
-    b.y = Math.min(b.y, floorY - b.r);
-  }
-}
-window.addEventListener('resize', resize);
-resize();
-
-const later = (sec, fn) => timers.push({ t: T + sec, fn });
-
-/* ---------- Buddies: three friendly bouncy characters ---------- */
-[
-  { hue: 195, feature: 'ears', size: 1.0 },
-  { hue: 330, feature: 'antenna', size: 0.9 },
-  { hue: 45, feature: 'tuft', size: 1.1 }
-].forEach((d, i) => {
-  const r = S * 0.08 * d.size;
-  buddies.push(Object.assign({}, d, {
-    r, x: W * (0.25 + i * 0.25), y: floorY - r, vx: 0, vy: 0,
-    sq: 0, sqv: 0, ground: true, hopT: rand(1, 4),
-    blinkT: rand(1, 4), blink: 0, lx: 0, ly: 0,
-    happy: 0, spinT: -1, spinDir: 1, grabbedBy: null, tickleCD: 0
-  }));
-});
-
-/* =====================================================================
-   Spawners
-   ===================================================================== */
-function addP(o) { if (parts.length < MAXP) parts.push(o); }
-
-function burst(x, y, hue, n, speed = 0.6, opts = {}) {
-  for (let i = 0; i < n; i++) {
-    const a = rand(0, TAU), sp = rand(0.25, 1) * S * speed;
-    addP({
-      x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
-      life: 0, max: rand(0.5, 1.1) * (opts.life || 1), size: S * rand(0.006, 0.015) * (opts.size || 1),
-      hue: hue + rand(-35, 35), g: S * (opts.g == null ? 0.35 : opts.g), drag: opts.drag || 0.92,
-      kind: opts.kind || pick(['dot', 'spark', 'spark']), rot: rand(0, TAU), vr: rand(-6, 6), light: true
-    });
-  }
-}
-function confetti(x, y, n, spread = 1) {
-  for (let i = 0; i < n; i++) {
-    const a = rand(-Math.PI, 0), sp = rand(0.3, 1.1) * S * spread;
-    addP({
-      x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
-      life: 0, max: rand(1.4, 2.4), size: S * rand(0.008, 0.016),
-      hue: rand(0, 360), g: S * 0.9, drag: 0.95, kind: 'confetti',
-      rot: rand(0, TAU), vr: rand(-12, 12), light: false
-    });
-  }
-}
-function hearts(x, y, hue, n) {
-  for (let i = 0; i < n; i++) {
-    addP({
-      x: x + rand(-1, 1) * S * 0.04, y, vx: rand(-1, 1) * S * 0.12, vy: -S * rand(0.2, 0.45),
-      life: 0, max: rand(1, 1.6), size: S * rand(0.014, 0.024),
-      hue: hue + rand(-20, 20), g: -S * 0.05, drag: 0.97, kind: 'heart', rot: rand(-0.4, 0.4), vr: rand(-1, 1), light: false
-    });
-  }
-}
-function ring(x, y, hue, r1 = S * 0.18, life = 0.6, w = S * 0.018) {
-  rings.push({ x, y, hue, r0: S * 0.02, r1, age: 0, life, w });
-}
-const SHAPES = ['star', 'heart', 'circle', 'flower', 'sun'];
-function addShape(x, y, hue) {
-  if (shapes.length > 36) shapes.shift();
-  shapes.push({
-    x, y, hue, type: pick(SHAPES), r: S * rand(0.06, 0.1), age: 0, life: rand(2.2, 3),
-    rot: rand(-0.3, 0.3), wob: rand(0, TAU), face: Math.random() < 0.85
-  });
-}
-function firework(x, y, hue) {
-  ring(x, y, hue, S * 0.3, 0.9, S * 0.012);
-  for (let i = 0; i < 70; i++) {
-    const a = (i / 70) * TAU + rand(-0.05, 0.05), sp = S * rand(0.45, 0.8);
-    addP({
-      x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0, max: rand(1.1, 1.7),
-      size: S * rand(0.006, 0.011), hue: hue + rand(-25, 25), g: S * 0.45, drag: 0.955,
-      kind: i % 3 ? 'dot' : 'spark', rot: 0, vr: rand(-4, 4), light: true
-    });
-  }
-}
-function doFlash(hue) { if (!settings.calm) { flash = 0.55; flashHue = hue; } }
-
-/* =====================================================================
-   Interactions
-   ===================================================================== */
-function noteFromX(x) { return clamp(Math.floor((x / W) * NOTE_COUNT), 0, NOTE_COUNT - 1); }
-function hueFromNote(i) { return (i / (NOTE_COUNT - 1)) * 300; }
-
-function tapBurst(x, y, p) {
-  const idx = noteFromX(x), hue = hueFromNote(idx);
-  p.hue = hue;
-  SFX.bell(idx);
-  addShape(x, y, hue);
-  ring(x, y, hue);
-  burst(x, y, hue, 16);
-  bgHueTarget += rand(4, 10);
-}
-
-function popBubble(bb, loud = true) {
-  bb.dead = true;
-  if (loud) SFX.bubblePop(bb.r / (S * 0.06));
-  ring(bb.x, bb.y, bb.hue, bb.r * 1.8, 0.4, S * 0.01);
-  burst(bb.x, bb.y, bb.hue, 14, 0.45, { kind: 'dot', g: 0.6, size: 0.8 });
-}
-function popBalloon(b) {
-  b.dead = true;
-  SFX.bigPop();
-  ring(b.x, b.y, b.hue, b.r * 3, 0.6, S * 0.02);
-  confetti(b.x, b.y, 50, 1.1);
-  burst(b.x, b.y, b.hue, 24, 0.8);
-  doFlash(b.hue);
-}
-function tickleBuddy(b, strong) {
-  b.happy = 1.4;
-  if (strong) {
-    b.vy = -S * rand(1.6, 2.0); b.vx += rand(-1, 1) * S * 0.25;
-    b.spinT = 0; b.spinDir = Math.random() < 0.5 ? -1 : 1; b.sqv -= 5;
-    SFX.boing(); later(0.12, SFX.giggle);
-  } else {
-    if (b.ground) b.vy = -S * 0.6;
-    b.sqv -= 3; SFX.giggle();
-  }
-  hearts(b.x, b.y - b.r, b.hue, strong ? 6 : 3);
-}
-
-function multiTrigger(level) {
-  const pts = [...pointers.values()];
-  const mx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
-  const my = pts.reduce((s, p) => s + p.y, 0) / pts.length;
-  if (level === 2) {
-    SFX.shimmer();
-    burst(mx, my, rand(0, 360), 24, 0.7);
-  } else if (level === 3 || level === 4) {
-    for (let k = 0; k < level; k++) {
-      later(k * 0.18, () => {
-        const x = rand(0.15, 0.85) * W, y = rand(0.12, 0.5) * H;
-        firework(x, y, rand(0, 360));
-        SFX.boom();
-        SFX.bell(((k * 3) % NOTE_COUNT) + 2, 0.05, 0.14);
-      });
-    }
-    if (level === 4) ring(mx, my, rand(0, 360), S * 0.6, 1.0, S * 0.03);
-  } else if (level >= 5) {
-    if (T - lastMega < 1.5) return;
-    lastMega = T;
-    SFX.fanfare(); SFX.boom(0.1);
-    doFlash(rand(0, 360));
-    for (let k = 0; k < 6; k++) ring(mx, my, k * 60, S * (0.5 + k * 0.12), 1.1 + k * 0.1, S * 0.03);
-    for (let k = 0; k < 7; k++) later(k * 0.05, () => confetti(rand(0, W), -S * 0.02, 18, 0.3));
-    for (let k = 0; k < 4; k++) later(0.2 + k * 0.2, () => firework(rand(0.1, 0.9) * W, rand(0.1, 0.45) * H, rand(0, 360)));
-    for (const b of buddies) if (b.grabbedBy == null) { b.vy = -S * rand(1.4, 1.9); b.spinT = 0; b.happy = 2; }
-    bgHueTarget += 120;
-  }
-}
-const firedLevels = new Set();
-let lastMega = -9;
-function multiCheck() {
-  const n = pointers.size;
-  let highest = 0;
-  for (let lvl = 2; lvl <= Math.min(n, 5); lvl++) {
-    if (!firedLevels.has(lvl)) { firedLevels.add(lvl); highest = lvl; }
-  }
-  if (highest) multiTrigger(highest);
-}
-function multiRelease() {
-  const n = pointers.size;
-  for (const l of [...firedLevels]) if (l > n) firedLevels.delete(l);
-}
-
-function hitBuddy(x, y) {
-  for (let i = buddies.length - 1; i >= 0; i--) {
-    const b = buddies[i];
-    if (b.grabbedBy == null && Math.hypot(x - b.x, y - b.y) < b.r * 1.25) return b;
-  }
-  return null;
-}
-function hitBubble(x, y, pad = 1.15) {
-  for (const bb of bubbles) if (!bb.dead && Math.hypot(x - bb.x, y - bb.y) < bb.r * pad) return bb;
-  return null;
-}
-function hitBalloon(x, y) {
-  for (const b of balloons) if (!b.dead && b.state === 'float' && Math.hypot(x - b.x, y - b.y) < b.r * 1.3) return b;
-  return null;
-}
-
-/* ---------- Pointer events (touch, multi-touch, mouse) ---------- */
-function onDown(e) {
-  e.preventDefault();
-  initAudio();
-  lastInteract = T;
-  try { cv.setPointerCapture(e.pointerId); } catch (err) {}
-  const x = e.clientX, y = e.clientY;
-  const p = {
-    id: e.pointerId, x, y, sx: x, sy: y, t0: T, ts: e.timeStamp, vx: 0, vy: 0,
-    moved: false, dist: 0, sparkD: 0, hue: rand(0, 360),
-    ribbon: null, voice: null, grab: null, gox: 0, goy: 0, balloon: null, squeak: null, noHold: false
-  };
-  pointers.set(e.pointerId, p);
-
-  const b = hitBuddy(x, y);
-  const bal = !b && hitBalloon(x, y);
-  const bub = !b && !bal && hitBubble(x, y);
-  if (b) {
-    p.grab = b; b.grabbedBy = p.id; p.gox = b.x - x; p.goy = b.y - y; p.noHold = true;
-    b.vx = b.vy = 0; b.happy = 1; b.sqv += 4;
-    SFX.giggle(); hearts(b.x, b.y - b.r, b.hue, 2);
-  } else if (bal) {
-    popBalloon(bal); p.noHold = true; p.hue = bal.hue;
-  } else if (bub) {
-    popBubble(bub); p.noHold = true; p.hue = bub.hue;
-    addShape(x, y, bub.hue);
-  } else {
-    tapBurst(x, y, p);
-  }
-  multiCheck();
-}
-
-function onMove(e) {
-  const p = pointers.get(e.pointerId);
-  if (!p) return;
-  e.preventDefault();
-  const list = (e.getCoalescedEvents && e.getCoalescedEvents()) || [];
-  if (list.length) for (const ev of list) movePoint(p, ev.clientX, ev.clientY, ev.timeStamp);
-  else movePoint(p, e.clientX, e.clientY, e.timeStamp);
-}
-
-function movePoint(p, x, y, ts) {
-  const dx = x - p.x, dy = y - p.y, d = Math.hypot(dx, dy);
-  if (d < 0.5) return;
-  lastInteract = T;
-  const dts = Math.max(4, ts - p.ts) / 1000;
-  p.vx = p.vx * 0.5 + (dx / dts) * 0.5;
-  p.vy = p.vy * 0.5 + (dy / dts) * 0.5;
-  p.x = x; p.y = y; p.ts = ts; p.dist += d;
-  if (!p.moved && Math.hypot(x - p.sx, y - p.sy) > S * 0.025) p.moved = true;
-
-  if (p.grab) {
-    const b = p.grab;
-    b.x = clamp(x + p.gox, b.r, W - b.r);
-    b.y = clamp(y + p.goy, b.r, floorY - b.r);
-    return;
-  }
-  if (p.balloon) { p.balloon.x = x; p.balloon.y = y - p.balloon.r * 1.1; return; }
-  if (!p.moved) return;
-
-  if (!p.ribbon) { p.ribbon = { pts: [], hue: p.hue, n: 0, active: true }; ribbons.push(p.ribbon); }
-  if (!p.voice) p.voice = contVoice('slide');
-  const rb = p.ribbon, lp = rb.pts[rb.pts.length - 1];
-  if (!lp || Math.hypot(x - lp.x, y - lp.y) > 3) rb.pts.push({ x, y, t: T, h: rb.hue + (rb.n++) * 4 });
-  if (rb.pts.length > 140) rb.pts.shift();
-
-  p.sparkD += d;
-  while (p.sparkD > S * 0.025) {
-    p.sparkD -= S * 0.025;
-    addP({
-      x: x + rand(-1, 1) * S * 0.01, y: y + rand(-1, 1) * S * 0.01,
-      vx: rand(-1, 1) * S * 0.12, vy: rand(-1, 1) * S * 0.12,
-      life: 0, max: rand(0.5, 0.9), size: S * rand(0.008, 0.016),
-      hue: rb.hue + rb.n * 4 + rand(-20, 20), g: S * 0.1, drag: 0.95, kind: 'spark', rot: rand(0, TAU), vr: rand(-5, 5), light: true
-    });
-  }
-  const bub = hitBubble(x, y, 1.0);
-  if (bub) popBubble(bub);
-  const bal = hitBalloon(x, y);
-  if (bal) popBalloon(bal);
-  for (const b of buddies) {
-    if (b.grabbedBy == null && b.tickleCD <= 0 && Math.hypot(x - b.x, y - b.y) < b.r) {
-      b.tickleCD = 0.7; b.vx += clamp(p.vx, -S * 2, S * 2) * 0.4; tickleBuddy(b, false);
-    }
-  }
-}
-
-function onUp(e) {
-  const p = pointers.get(e.pointerId);
-  if (!p) return;
-  e.preventDefault();
-  pointers.delete(e.pointerId);
-  if (p.voice) p.voice.stop();
-  if (p.squeak) p.squeak.stop();
-  if (p.ribbon) p.ribbon.active = false;
-  const speed = Math.hypot(p.vx, p.vy);
-
-  if (p.grab) {
-    const b = p.grab; b.grabbedBy = null;
-    if (!p.moved && T - p.t0 < 0.6) tickleBuddy(b, true);
-    else {
-      b.vx = clamp(p.vx, -S * 4, S * 4); b.vy = clamp(p.vy, -S * 4, S * 4);
-      if (speed > S * 1.2) { SFX.whee(); b.spinT = 0; b.spinDir = Math.sign(b.vx) || 1; }
-      b.happy = 1.2;
-    }
-  } else if (p.balloon) {
-    const b = p.balloon; b.state = 'float'; b.vy = -S * 0.12; b.age = 0;
-    SFX.whee();
-  } else if (p.moved && speed > S * 1.3 && comets.length < 6) {
-    const k = Math.min(1, (S * 4) / speed);
-    comets.push({ x: p.x, y: p.y, vx: p.vx * k, vy: p.vy * k, life: 2.6, hue: p.hue, bounces: 0 });
-    SFX.whoosh();
-  }
-  multiRelease();
-}
-
-cv.addEventListener('pointerdown', onDown, { passive: false });
-cv.addEventListener('pointermove', onMove, { passive: false });
-cv.addEventListener('pointerup', onUp, { passive: false });
-cv.addEventListener('pointercancel', onUp, { passive: false });
-cv.addEventListener('lostpointercapture', (e) => { if (pointers.has(e.pointerId)) onUp(e); });
-
-// Block every browser gesture we can: scrolling, zoom, long-press menus, double-tap zoom.
-const block = (e) => { if (e.cancelable) e.preventDefault(); };
-['touchstart', 'touchmove', 'touchend', 'gesturestart', 'gesturechange', 'dblclick', 'contextmenu', 'selectstart', 'dragstart']
-  .forEach(ev => document.addEventListener(ev, block, { passive: false }));
-document.addEventListener('wheel', block, { passive: false });
-document.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && ['+', '-', '=', '0'].includes(e.key)) e.preventDefault(); });
-
-/* =====================================================================
-   Update
-   ===================================================================== */
-let bubbleT = 0, inviteT = 0;
-
-function update(dt) {
-  T += dt;
-  const idle = T - lastInteract > 8;
-
-  // Timed events
-  for (let i = timers.length - 1; i >= 0; i--) if (T >= timers[i].t) { const f = timers[i].fn; timers.splice(i, 1); f(); }
-
-  bgHue += dt * (settings.calm ? 2 : 5);
-  bgHue += (bgHueTarget - bgHue) * Math.min(1, dt * 1.5);
-  bgHueTarget = Math.max(bgHueTarget, bgHue);
-  flash = Math.max(0, flash - dt * 1.8);
-
-  // Pointers: slide-whistle voices, press-and-hold balloons
-  for (const p of pointers.values()) {
-    const dec = Math.pow(0.03, dt); p.vx *= dec; p.vy *= dec;
-    const speed = Math.hypot(p.vx, p.vy);
-    if (p.voice) {
-      const idx = clamp(Math.round((1 - p.y / H) * (NOTE_COUNT - 1)), 0, NOTE_COUNT - 1);
-      p.voice.set(noteFreq(idx), clamp(0.035 + (speed / S) * 0.05, 0.035, 0.13));
-    }
-    if (!p.moved && !p.noHold && !p.balloon && !p.grab && T - p.t0 > 0.45 && balloons.length < 8 && pointers.size <= 2) {
-      p.balloon = { x: p.x, y: p.y - S * 0.035, r: S * 0.03, hue: p.hue, state: 'inflate', vy: 0, age: 0, ph: rand(0, TAU), dead: false };
-      balloons.push(p.balloon);
-      p.squeak = contVoice('squeak');
-    }
-    if (p.balloon && p.balloon.state === 'inflate') {
-      const b = p.balloon, maxR = S * 0.17;
-      b.r = Math.min(maxR, b.r + S * 0.065 * dt);
-      b.x = p.x; b.y = p.y - b.r * 1.1;
-      if (p.squeak) p.squeak.set(160 + (b.r / maxR) * 700, 0.05);
-      if (Math.random() < dt * 20) addP({ x: b.x + rand(-1, 1) * b.r, y: b.y + rand(-1, 1) * b.r, vx: 0, vy: -S * 0.1, life: 0, max: 0.6, size: S * 0.008, hue: b.hue, g: 0, drag: 0.95, kind: 'spark', rot: 0, vr: 3, light: true });
-      if (b.r >= maxR) {
-        popBalloon(b); p.balloon = null; p.noHold = true;
-        if (p.squeak) { p.squeak.stop(); p.squeak = null; }
-      }
-    }
-  }
-
-  // Bubbles drift up from the bottom
-  bubbleT -= dt;
-  const bubbleEvery = settings.calm ? 2.6 : idle ? 0.7 : 1.3;
-  if (bubbleT <= 0 && bubbles.length < 12) {
-    bubbleT = bubbleEvery * rand(0.6, 1.4);
-    const r = S * rand(0.04, 0.085);
-    bubbles.push({ x: rand(r, W - r), bx: 0, y: H + r, r, vy: -S * rand(0.07, 0.15), ph: rand(0, TAU), hue: rand(0, 360), age: 0, dead: false });
-    bubbles[bubbles.length - 1].bx = bubbles[bubbles.length - 1].x;
-  }
-  sweep(bubbles, (bb) => {
-    if (bb.dead) return false;
-    bb.age += dt; bb.y += bb.vy * dt;
-    bb.x = bb.bx + Math.sin(bb.age * 1.6 + bb.ph) * bb.r * 0.7;
-    return bb.y > -bb.r * 2;
+  const grid = document.getElementById('animalGrid');
+  ['1f42e', '1f436', '1f981', '1f986', '1f437', '1f431', '1f418', '1f438'].forEach((code, i) => {
+    const im = document.createElement('img'); im.src = url(code); im.alt = '';
+    im.style.animationDelay = (-i * 0.14) + 's';
+    grid.appendChild(im);
   });
 
-  // Gentle "touch me" glows while nobody is playing
-  if (idle) {
-    inviteT -= dt;
-    if (inviteT <= 0) { inviteT = 1.6; ring(rand(0.15, 0.85) * W, rand(0.2, 0.7) * H, rand(0, 360), S * 0.14, 1.4, S * 0.012); }
+  // Rainbow, bobbing title letters
+  const title = document.getElementById('title');
+  const colors = ['#ff6b6b', '#ffa94d', '#ffd43b', '#69db7c', '#4dabf7', '#9775fa', '#f783ac'];
+  title.innerHTML = [...title.textContent].map((ch, i) =>
+    ch === ' ' ? ' ' : `<span style="color:${colors[i % colors.length]};animation-delay:${-i * 0.12}s">${ch}</span>`).join('');
+
+  // Drifting bubbles
+  const box = document.getElementById('bubbles');
+  for (let i = 0; i < 14; i++) {
+    const s = document.createElement('span'), size = 3 + Math.random() * 8;
+    s.style.cssText = `left:${Math.random() * 100}vw;width:${size}vmin;height:${size}vmin;animation-duration:${9 + Math.random() * 10}s;animation-delay:${-Math.random() * 18}s`;
+    box.appendChild(s);
   }
 
-  // Balloons
-  sweep(balloons, (b) => {
-    if (b.dead) return false;
-    if (b.state === 'float') {
-      b.age += dt; b.vy -= S * 0.08 * dt;
-      b.y += b.vy * dt; b.x += Math.sin(b.age * 2 + b.ph) * S * 0.05 * dt;
-      return b.y > -b.r * 4;
-    }
-    return true;
-  });
-
-  // Comets (flicks)
-  sweep(comets, (c) => {
-    c.life -= dt;
-    const dr = Math.pow(0.6, dt); c.vx *= dr; c.vy *= dr;
-    c.x += c.vx * dt; c.y += c.vy * dt;
-    let hit = false;
-    if (c.x < 0) { c.x = 0; c.vx = Math.abs(c.vx); hit = true; }
-    if (c.x > W) { c.x = W; c.vx = -Math.abs(c.vx); hit = true; }
-    if (c.y < 0) { c.y = 0; c.vy = Math.abs(c.vy); hit = true; }
-    if (c.y > H) { c.y = H; c.vy = -Math.abs(c.vy); hit = true; }
-    if (hit && c.bounces < 6) { c.bounces++; SFX.bell(noteFromX(c.x), 0, 0.13); burst(c.x, c.y, c.hue, 10, 0.5); }
-    c.hue += dt * 120;
-    addP({ x: c.x, y: c.y, vx: rand(-1, 1) * S * 0.05, vy: rand(-1, 1) * S * 0.05, life: 0, max: rand(0.4, 0.8), size: S * rand(0.01, 0.02), hue: c.hue, g: 0, drag: 0.93, kind: Math.random() < 0.5 ? 'spark' : 'dot', rot: 0, vr: 4, light: true });
-    const bub = hitBubble(c.x, c.y, 1.1); if (bub) popBubble(bub);
-    return c.life > 0 && Math.hypot(c.vx, c.vy) > S * 0.08;
-  });
-
-  // Sparkles along multi-finger zaps
-  if (pointers.size >= 2 && Math.random() < dt * 30) {
-    const arr = [...pointers.values()];
-    const a = pick(arr), b = pick(arr);
-    if (a !== b) { const k = Math.random(); addP({ x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k, vx: rand(-1, 1) * S * 0.15, vy: rand(-1, 1) * S * 0.15, life: 0, max: 0.7, size: S * 0.012, hue: T * 200, g: 0, drag: 0.93, kind: 'spark', rot: 0, vr: 5, light: true }); }
-  }
-
-  // Ribbons
-  sweep(ribbons, (r) => {
-    while (r.pts.length && T - r.pts[0].t > 0.7) r.pts.shift();
-    return r.active || r.pts.length > 0;
-  });
-
-  // Shapes, rings, particles
-  sweep(shapes, (s) => { s.age += dt; s.y -= S * 0.04 * dt; return s.age < s.life; });
-  sweep(rings, (r) => { r.age += dt; return r.age < r.life; });
-  sweep(parts, (p) => {
-    p.life += dt;
-    const dr = Math.pow(p.drag, dt * 60);
-    p.vx *= dr; p.vy *= dr; p.vy += p.g * dt;
-    p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
-    return p.life < p.max;
-  });
-
-  for (const b of buddies) updateBuddy(b, dt, idle);
-  // Keep buddies from overlapping
-  for (let i = 0; i < buddies.length; i++) for (let j = i + 1; j < buddies.length; j++) {
-    const a = buddies[i], b = buddies[j];
-    const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, min = a.r + b.r;
-    if (d < min) {
-      const push = (min - d) / 2, nx = dx / d, ny = dy / d;
-      if (a.grabbedBy == null) { a.x -= nx * push; a.y -= ny * push; a.vx -= nx * S * 0.3; }
-      if (b.grabbedBy == null) { b.x += nx * push; b.y += ny * push; b.vx += nx * S * 0.3; }
-    }
-  }
-}
-
-function updateBuddy(b, dt, idle) {
-  const G = S * 3;
-  b.tickleCD -= dt;
-  b.happy = Math.max(0, b.happy - dt);
-  if (b.grabbedBy == null) {
-    b.vy += G * dt;
-    b.x += b.vx * dt; b.y += b.vy * dt;
-    const fy = floorY - b.r;
-    if (b.y >= fy) {
-      b.y = fy;
-      if (b.vy > S * 0.4) {
-        b.sqv += (b.vy / S) * 3.2;
-        if (b.vy > S * 1.4) SFX.thud(Math.min(1, b.vy / (S * 3)));
-        b.vy = b.vy > S * 0.9 ? -b.vy * 0.32 : 0;
-      } else b.vy = 0;
-      b.ground = b.vy === 0;
-    } else b.ground = false;
-    b.vx *= Math.pow(b.ground ? 0.02 : 0.7, dt);
-    if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx) * 0.7; b.sqv += 1.5; }
-    if (b.x > W - b.r) { b.x = W - b.r; b.vx = -Math.abs(b.vx) * 0.7; b.sqv += 1.5; }
-    if (b.y < b.r) { b.y = b.r; b.vy = Math.abs(b.vy) * 0.5; }
-    if (b.ground) {
-      b.hopT -= dt * (idle ? 1.8 : 1);
-      if (b.hopT <= 0) {
-        b.hopT = rand(2, 5.5);
-        b.vy = -S * rand(0.7, 1.15);
-        b.vx = (W * 0.5 - b.x) * 0.12 + rand(-1, 1) * S * 0.35;
-        b.sqv -= 3.5;
-      }
-    }
-    // jelly squash spring
-    b.sqv += (-200 * b.sq - 11 * b.sqv) * dt;
-    b.sq = clamp(b.sq + b.sqv * dt, -0.35, 0.45);
-  } else {
-    b.sq = Math.sin(T * 22) * 0.07;
-    b.happy = Math.max(b.happy, 0.3);
-  }
-  if (b.spinT >= 0) { b.spinT += dt / 0.8; if (b.spinT >= 1) b.spinT = -1; }
-  b.blinkT -= dt; b.blink -= dt;
-  if (b.blinkT <= 0) { b.blink = 0.13; b.blinkT = rand(2, 5); }
-
-  // Eyes follow the nearest finger (or a bubble)
-  let tx = null, ty = null, best = Infinity;
-  for (const p of pointers.values()) { const d = Math.hypot(p.x - b.x, p.y - b.y); if (d < best) { best = d; tx = p.x; ty = p.y; } }
-  if (tx === null) for (const bb of bubbles) { const d = Math.hypot(bb.x - b.x, bb.y - b.y); if (d < best) { best = d; tx = bb.x; ty = bb.y; } }
-  let lx = 0, ly = 0;
-  if (tx !== null) { const dx = tx - b.x, dy = ty - b.y, d = Math.hypot(dx, dy) || 1, m = Math.min(1, d / (b.r * 2)); lx = dx / d * m; ly = dy / d * m; }
-  b.lx += (lx - b.lx) * Math.min(1, dt * 10);
-  b.ly += (ly - b.ly) * Math.min(1, dt * 10);
-
-  // Buddies pop bubbles they bump into
-  for (const bb of bubbles) if (!bb.dead && Math.hypot(bb.x - b.x, bb.y - b.y) < b.r + bb.r * 0.8) { popBubble(bb); b.happy = Math.max(b.happy, 0.8); }
-}
-
-/* =====================================================================
-   Drawing
-   ===================================================================== */
-function hsl(h, s, l, a = 1) { return `hsla(${((h % 360) + 360) % 360},${s}%,${l}%,${a})`; }
-
-function drawBackground() {
-  const g = cx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, hsl(bgHue, 65, 16));
-  g.addColorStop(0.6, hsl(bgHue + 35, 60, 24));
-  g.addColorStop(1, hsl(bgHue + 70, 60, 32));
-  cx.fillStyle = g; cx.fillRect(0, 0, W, H);
-
-  cx.fillStyle = '#fff';
-  for (const s of bgStars) {
-    cx.globalAlpha = 0.25 + 0.55 * (0.5 + 0.5 * Math.sin(T * s.sp + s.ph));
-    cx.beginPath(); cx.arc(s.x * W, s.y * H, s.r, 0, TAU); cx.fill();
-  }
-  cx.globalAlpha = 1;
-
-  // rolling hills
-  for (let layer = 0; layer < 2; layer++) {
-    const base = floorY - (layer === 0 ? S * 0.05 : -S * 0.005), amp = S * (layer === 0 ? 0.035 : 0.01);
-    cx.fillStyle = layer === 0 ? hsl(bgHue + 140, 45, 22, 0.8) : hsl(bgHue + 120, 55, 30);
-    cx.beginPath(); cx.moveTo(0, H);
-    for (let i = 0; i <= 32; i++) {
-      const x = (i / 32) * W;
-      cx.lineTo(x, base + Math.sin((i / 32) * TAU * (layer ? 3 : 1.5) + layer * 2 + T * 0.1 * (layer ? 0 : 1)) * amp);
-    }
-    cx.lineTo(W, H); cx.closePath(); cx.fill();
-  }
-}
-
-function starPath(r, n = 5, inner = 0.5) {
-  cx.beginPath();
-  for (let i = 0; i < n * 2; i++) {
-    const a = (i * Math.PI) / n - Math.PI / 2, rr = i % 2 ? r * inner : r;
-    if (i) cx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); else cx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr);
-  }
-  cx.closePath();
-}
-function heartPath(r) {
-  cx.beginPath();
-  cx.moveTo(0, r * 0.85);
-  cx.bezierCurveTo(-r * 1.5, -r * 0.15, -r * 0.65, -r * 1.15, 0, -r * 0.42);
-  cx.bezierCurveTo(r * 0.65, -r * 1.15, r * 1.5, -r * 0.15, 0, r * 0.85);
-  cx.closePath();
-}
-function face(r, oy = 0) {
-  const ex = r * 0.34, ey = oy - r * 0.08;
-  cx.fillStyle = '#fff';
-  cx.beginPath(); cx.arc(-ex, ey, r * 0.17, 0, TAU); cx.arc(ex, ey, r * 0.17, 0, TAU); cx.fill();
-  cx.fillStyle = '#1d1233';
-  cx.beginPath(); cx.arc(-ex, ey + r * 0.02, r * 0.1, 0, TAU); cx.arc(ex, ey + r * 0.02, r * 0.1, 0, TAU); cx.fill();
-  cx.strokeStyle = '#1d1233'; cx.lineWidth = r * 0.08; cx.lineCap = 'round';
-  cx.beginPath(); cx.arc(0, oy + r * 0.12, r * 0.28, 0.18 * Math.PI, 0.82 * Math.PI); cx.stroke();
-  cx.fillStyle = 'rgba(255,120,160,.55)';
-  cx.beginPath(); cx.ellipse(-ex * 1.45, oy + r * 0.2, r * 0.12, r * 0.07, 0, 0, TAU); cx.ellipse(ex * 1.45, oy + r * 0.2, r * 0.12, r * 0.07, 0, 0, TAU); cx.fill();
-}
-
-function drawShape(s) {
-  const k = s.age / s.life;
-  const grow = easeOutBack(Math.min(1, s.age / 0.45));
-  const fade = s.age > s.life - 0.6 ? (s.life - s.age) / 0.6 : 1;
-  const r = s.r * grow * (0.6 + 0.4 * fade);
-  if (r <= 0.5) return;
-  cx.save();
-  cx.globalAlpha = Math.max(0, fade);
-  cx.translate(s.x, s.y);
-  cx.rotate(s.rot + Math.sin(s.age * 3 + s.wob) * 0.15);
-  const fill = hsl(s.hue, 95, 62), line = hsl(s.hue, 80, 32);
-  cx.lineJoin = 'round'; cx.lineWidth = r * 0.1; cx.strokeStyle = line; cx.fillStyle = fill;
-  let faceR = r * 0.7, faceY = 0;
-  switch (s.type) {
-    case 'star': starPath(r, 5, 0.52); cx.fill(); cx.stroke(); faceR = r * 0.55; faceY = r * 0.08; break;
-    case 'heart': heartPath(r); cx.fill(); cx.stroke(); faceR = r * 0.6; faceY = -r * 0.05; break;
-    case 'circle': cx.beginPath(); cx.arc(0, 0, r * 0.8, 0, TAU); cx.fill(); cx.stroke(); faceR = r * 0.8; break;
-    case 'flower':
-      for (let i = 0; i < 6; i++) {
-        const a = (i / 6) * TAU + s.age;
-        cx.beginPath(); cx.arc(Math.cos(a) * r * 0.58, Math.sin(a) * r * 0.58, r * 0.4, 0, TAU); cx.fill(); cx.stroke();
-      }
-      cx.fillStyle = hsl(s.hue + 60, 100, 70);
-      cx.beginPath(); cx.arc(0, 0, r * 0.45, 0, TAU); cx.fill(); cx.stroke();
-      faceR = r * 0.45; break;
-    case 'sun':
-      cx.save(); cx.rotate(s.age * 1.5);
-      for (let i = 0; i < 10; i++) {
-        cx.rotate(TAU / 10);
-        cx.beginPath(); cx.moveTo(-r * 0.16, -r * 0.62); cx.lineTo(0, -r * 1.02); cx.lineTo(r * 0.16, -r * 0.62); cx.closePath(); cx.fill(); cx.stroke();
-      }
-      cx.restore();
-      cx.beginPath(); cx.arc(0, 0, r * 0.65, 0, TAU); cx.fill(); cx.stroke();
-      faceR = r * 0.65; break;
-  }
-  // glossy highlight
-  cx.fillStyle = 'rgba(255,255,255,.35)';
-  cx.beginPath(); cx.ellipse(-r * 0.28, -r * 0.38, r * 0.16, r * 0.09, -0.6, 0, TAU); cx.fill();
-  if (s.face) face(faceR, faceY);
-  cx.restore();
-}
-
-function drawBubble(bb) {
-  const r = bb.r;
-  cx.fillStyle = hsl(bb.hue, 90, 70, 0.16);
-  cx.strokeStyle = hsl(bb.hue + bb.age * 40, 95, 75, 0.85);
-  cx.lineWidth = Math.max(2, r * 0.07);
-  cx.beginPath(); cx.arc(bb.x, bb.y, r, 0, TAU); cx.fill(); cx.stroke();
-  cx.strokeStyle = hsl(bb.hue + 120 + bb.age * 40, 95, 80, 0.45);
-  cx.lineWidth = Math.max(1, r * 0.04);
-  cx.beginPath(); cx.arc(bb.x, bb.y, r * 0.86, 0.1 * Math.PI, 0.9 * Math.PI); cx.stroke();
-  cx.fillStyle = 'rgba(255,255,255,.75)';
-  cx.beginPath(); cx.ellipse(bb.x - r * 0.38, bb.y - r * 0.4, r * 0.2, r * 0.11, -0.7, 0, TAU); cx.fill();
-  cx.beginPath(); cx.arc(bb.x - r * 0.1, bb.y - r * 0.58, r * 0.06, 0, TAU); cx.fill();
-}
-
-function drawBalloon(b) {
-  const r = b.r, wob = Math.sin(T * 3 + b.ph) * 0.08;
-  // string
-  cx.strokeStyle = 'rgba(255,255,255,.7)'; cx.lineWidth = 2;
-  cx.beginPath(); cx.moveTo(b.x, b.y + r * 1.15);
-  cx.bezierCurveTo(b.x + Math.sin(T * 4 + b.ph) * r * 0.4, b.y + r * 1.8, b.x - Math.sin(T * 4 + b.ph) * r * 0.4, b.y + r * 2.4, b.x, b.y + r * 3);
-  cx.stroke();
-  cx.save(); cx.translate(b.x, b.y); cx.rotate(wob);
-  cx.fillStyle = hsl(b.hue, 92, 60);
-  cx.strokeStyle = hsl(b.hue, 80, 35); cx.lineWidth = Math.max(2, r * 0.05);
-  cx.beginPath(); cx.ellipse(0, 0, r, r * 1.15, 0, 0, TAU); cx.fill(); cx.stroke();
-  cx.beginPath(); cx.moveTo(-r * 0.12, r * 1.25); cx.lineTo(0, r * 1.1); cx.lineTo(r * 0.12, r * 1.25); cx.closePath(); cx.fill(); cx.stroke();
-  cx.fillStyle = 'rgba(255,255,255,.45)';
-  cx.beginPath(); cx.ellipse(-r * 0.4, -r * 0.45, r * 0.18, r * 0.32, 0.5, 0, TAU); cx.fill();
-  if (r > S * 0.05) face(r * 0.75, r * 0.05);
-  cx.restore();
-}
-
-function drawBuddy(b) {
-  const r = b.r;
-  // shadow on the ground
-  const h = clamp((floorY - b.y - r) / (S * 0.5), 0, 1);
-  cx.fillStyle = `rgba(0,0,0,${0.25 * (1 - h)})`;
-  cx.beginPath(); cx.ellipse(b.x, floorY + S * 0.004, r * (1 - h * 0.5), r * 0.16 * (1 - h * 0.5), 0, 0, TAU); cx.fill();
-
-  const sx = 1 + b.sq, sy = 1 - b.sq;
-  const spin = b.spinT >= 0 ? easeInOut(b.spinT) * TAU * b.spinDir : 0;
-  cx.save();
-  cx.translate(b.x, b.y + r); cx.scale(sx, sy); cx.translate(0, -r); cx.rotate(spin);
-
-  const body = hsl(b.hue, 85, 60), dark = hsl(b.hue, 75, 32), lw = r * 0.07;
-  cx.lineWidth = lw; cx.strokeStyle = dark; cx.lineJoin = 'round'; cx.lineCap = 'round';
-
-  // feet
-  cx.fillStyle = hsl(b.hue, 70, 45);
-  cx.beginPath(); cx.ellipse(-r * 0.42, r * 0.9, r * 0.26, r * 0.15, 0, 0, TAU); cx.ellipse(r * 0.42, r * 0.9, r * 0.26, r * 0.15, 0, 0, TAU); cx.fill(); cx.stroke();
-  // arms (wave when happy)
-  const wave = b.happy > 0 ? Math.sin(T * 16) * 0.6 : Math.sin(T * 2 + b.hue) * 0.1;
-  cx.fillStyle = body;
-  for (const s of [-1, 1]) {
-    cx.save(); cx.translate(s * r * 0.92, r * 0.1); cx.rotate(s * (-0.5 - wave));
-    cx.beginPath(); cx.ellipse(0, -r * 0.12, r * 0.14, r * 0.28, 0, 0, TAU); cx.fill(); cx.stroke();
-    cx.restore();
-  }
-  // head features
-  if (b.feature === 'ears') {
-    for (const s of [-1, 1]) {
-      cx.fillStyle = body;
-      cx.beginPath(); cx.moveTo(s * r * 0.25, -r * 0.85); cx.lineTo(s * r * 0.62, -r * 1.3); cx.lineTo(s * r * 0.8, -r * 0.55); cx.closePath(); cx.fill(); cx.stroke();
-      cx.fillStyle = 'rgba(255,150,190,.9)';
-      cx.beginPath(); cx.moveTo(s * r * 0.38, -r * 0.82); cx.lineTo(s * r * 0.6, -r * 1.12); cx.lineTo(s * r * 0.7, -r * 0.66); cx.closePath(); cx.fill();
-    }
-  } else if (b.feature === 'antenna') {
-    const bob = Math.sin(T * 5) * r * 0.08;
-    cx.beginPath(); cx.moveTo(0, -r * 0.95); cx.quadraticCurveTo(r * 0.1, -r * 1.25, r * 0.15 + bob, -r * 1.45); cx.stroke();
-    cx.fillStyle = hsl(b.hue + 180, 95, 65);
-    cx.beginPath(); cx.arc(r * 0.15 + bob, -r * 1.48, r * 0.15, 0, TAU); cx.fill(); cx.stroke();
-  } else {
-    cx.fillStyle = hsl(b.hue + 20, 90, 55);
-    for (let i = -1; i <= 1; i++) { cx.beginPath(); cx.arc(i * r * 0.22, -r * 0.98 - (i === 0 ? r * 0.1 : 0), r * 0.2, 0, TAU); cx.fill(); cx.stroke(); }
-  }
-  // body
-  cx.fillStyle = body;
-  cx.beginPath(); cx.arc(0, 0, r, 0, TAU); cx.fill(); cx.stroke();
-  cx.fillStyle = hsl(b.hue, 90, 72);
-  cx.beginPath(); cx.ellipse(0, r * 0.35, r * 0.55, r * 0.45, 0, 0, TAU); cx.fill();
-  cx.fillStyle = 'rgba(255,255,255,.35)';
-  cx.beginPath(); cx.ellipse(-r * 0.45, -r * 0.55, r * 0.2, r * 0.11, -0.7, 0, TAU); cx.fill();
-
-  // eyes
-  const ex = r * 0.36, ey = -r * 0.18, er = r * 0.27;
-  if (b.blink > 0 || (b.happy > 0.9 && b.grabbedBy == null && Math.sin(T * 6) > 0.4)) {
-    cx.strokeStyle = '#1d1233'; cx.lineWidth = r * 0.08;
-    for (const s of [-1, 1]) { cx.beginPath(); cx.arc(s * ex, ey + er * 0.2, er * 0.7, 1.15 * Math.PI, 1.85 * Math.PI); cx.stroke(); }
-  } else {
-    cx.fillStyle = '#fff'; cx.strokeStyle = dark; cx.lineWidth = r * 0.04;
-    for (const s of [-1, 1]) { cx.beginPath(); cx.ellipse(s * ex, ey, er, er * 1.1, 0, 0, TAU); cx.fill(); cx.stroke(); }
-    cx.fillStyle = '#1d1233';
-    const px = b.lx * er * 0.45, py = b.ly * er * 0.5;
-    for (const s of [-1, 1]) { cx.beginPath(); cx.arc(s * ex + px, ey + py, er * 0.52, 0, TAU); cx.fill(); }
-    cx.fillStyle = '#fff';
-    for (const s of [-1, 1]) { cx.beginPath(); cx.arc(s * ex + px - er * 0.18, ey + py - er * 0.2, er * 0.17, 0, TAU); cx.fill(); }
-  }
-  // cheeks
-  cx.fillStyle = 'rgba(255,110,160,.55)';
-  cx.beginPath(); cx.ellipse(-r * 0.62, r * 0.18, r * 0.15, r * 0.09, 0, 0, TAU); cx.ellipse(r * 0.62, r * 0.18, r * 0.15, r * 0.09, 0, 0, TAU); cx.fill();
-  // mouth
-  if (b.grabbedBy != null) {
-    cx.fillStyle = '#4a0d2a';
-    cx.beginPath(); cx.ellipse(0, r * 0.32, r * 0.16, r * 0.2, 0, 0, TAU); cx.fill();
-  } else if (b.happy > 0) {
-    cx.fillStyle = '#4a0d2a';
-    cx.beginPath(); cx.arc(0, r * 0.2, r * 0.3, 0, Math.PI); cx.closePath(); cx.fill();
-    cx.fillStyle = '#ff7aa8';
-    cx.beginPath(); cx.ellipse(0, r * 0.4, r * 0.14, r * 0.08, 0, 0, TAU); cx.fill();
-  } else {
-    cx.strokeStyle = '#1d1233'; cx.lineWidth = r * 0.07;
-    cx.beginPath(); cx.arc(0, r * 0.16, r * 0.22, 0.15 * Math.PI, 0.85 * Math.PI); cx.stroke();
-  }
-  cx.restore();
-}
-
-function drawRibbons() {
-  cx.lineCap = 'round'; cx.lineJoin = 'round';
-  for (const r of ribbons) {
-    const pts = r.pts;
-    for (let i = 1; i < pts.length; i++) {
-      const a = pts[i - 1], b = pts[i];
-      const k = 1 - (T - b.t) / 0.7;
-      if (k <= 0) continue;
-      const w = S * 0.04 * k;
-      cx.strokeStyle = hsl(b.h, 100, 60, 0.22 * k); cx.lineWidth = w * 2.4;
-      cx.beginPath(); cx.moveTo(a.x, a.y); cx.lineTo(b.x, b.y); cx.stroke();
-      cx.strokeStyle = hsl(b.h, 100, 70, k); cx.lineWidth = w;
-      cx.beginPath(); cx.moveTo(a.x, a.y); cx.lineTo(b.x, b.y); cx.stroke();
-    }
-  }
-}
-
-function drawZaps() {
-  if (pointers.size < 2) return;
-  const arr = [...pointers.values()];
-  const n = arr.length === 2 ? 1 : arr.length;
-  cx.lineCap = 'round'; cx.lineJoin = 'round';
-  for (let i = 0; i < n; i++) {
-    const a = arr[i], b = arr[(i + 1) % arr.length];
-    const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, nx = -dy / d, ny = dx / d;
-    for (let pass = 0; pass < 2; pass++) {
-      cx.beginPath();
-      for (let s = 0; s <= 20; s++) {
-        const t = s / 20, env = Math.sin(t * Math.PI);
-        const off = env * (Math.sin(t * 14 + T * 14 + i) * S * 0.02 + Math.sin(t * 5 - T * 6) * S * 0.015);
-        const x = a.x + dx * t + nx * off, y = a.y + dy * t + ny * off;
-        if (s) cx.lineTo(x, y); else cx.moveTo(x, y);
-      }
-      cx.strokeStyle = pass ? hsl(T * 200 + i * 60, 100, 80, 0.95) : hsl(T * 200 + i * 60, 100, 60, 0.3);
-      cx.lineWidth = pass ? S * 0.008 : S * 0.03;
-      cx.stroke();
-    }
-  }
-}
-
-function drawParticles(light) {
-  for (const p of parts) {
-    if (p.light !== light) continue;
-    const a = 1 - p.life / p.max;
-    cx.globalAlpha = a;
-    const s = p.size * (light ? 0.5 + 0.5 * a : 1);
-    switch (p.kind) {
-      case 'dot':
-        cx.fillStyle = hsl(p.hue, 100, 65);
-        cx.beginPath(); cx.arc(p.x, p.y, s, 0, TAU); cx.fill(); break;
-      case 'spark':
-        cx.fillStyle = hsl(p.hue, 100, 72);
-        cx.save(); cx.translate(p.x, p.y); cx.rotate(p.rot); starPath(s * 1.6, 4, 0.3); cx.fill(); cx.restore(); break;
-      case 'confetti':
-        cx.fillStyle = hsl(p.hue, 90, 60);
-        cx.save(); cx.translate(p.x, p.y); cx.rotate(p.rot);
-        cx.fillRect(-s, -s * 0.5 * Math.abs(Math.cos(p.rot * 1.7)), s * 2, s * Math.abs(Math.cos(p.rot * 1.7)) + 1);
-        cx.restore(); break;
-      case 'heart':
-        cx.fillStyle = hsl(p.hue, 95, 65);
-        cx.save(); cx.translate(p.x, p.y); cx.rotate(p.rot); heartPath(s); cx.fill(); cx.restore(); break;
-    }
-  }
-  cx.globalAlpha = 1;
-}
-
-function drawComets() {
-  for (const c of comets) {
-    const a = Math.min(1, c.life);
-    cx.fillStyle = hsl(c.hue, 100, 70, 0.35 * a);
-    cx.beginPath(); cx.arc(c.x, c.y, S * 0.045, 0, TAU); cx.fill();
-    cx.fillStyle = `rgba(255,255,255,${a})`;
-    cx.save(); cx.translate(c.x, c.y); cx.rotate(T * 6); starPath(S * 0.035, 5, 0.5); cx.fill(); cx.restore();
-  }
-}
-
-function drawRings() {
-  for (const r of rings) {
-    const k = r.age / r.life;
-    cx.strokeStyle = hsl(r.hue, 100, 70, 1 - k);
-    cx.lineWidth = Math.max(0.5, r.w * (1 - k));
-    cx.beginPath(); cx.arc(r.x, r.y, r.r0 + (r.r1 - r.r0) * easeOut(k), 0, TAU); cx.stroke();
-  }
-}
-
-function draw() {
-  cx.globalCompositeOperation = 'source-over';
-  drawBackground();
-  for (const bb of bubbles) drawBubble(bb);
-  for (const b of balloons) if (b.state === 'float') drawBalloon(b);
-  for (const s of shapes) drawShape(s);
-  for (const b of buddies) drawBuddy(b);
-  for (const b of balloons) if (b.state === 'inflate') drawBalloon(b);
-  drawParticles(false);
-
-  cx.globalCompositeOperation = 'lighter';
-  drawRibbons();
-  drawZaps();
-  drawRings();
-  drawComets();
-  drawParticles(true);
-  cx.globalCompositeOperation = 'source-over';
-
-  if (flash > 0) { cx.fillStyle = hsl(flashHue, 100, 85, flash * 0.6); cx.fillRect(0, 0, W, H); }
-}
-
-/* =====================================================================
-   Main loop
-   ===================================================================== */
-let lastFrame = performance.now();
-function frame(now) {
-  let dt = (now - lastFrame) / 1000; lastFrame = now;
-  if (dt > 0.05) dt = 0.05;
-  if (dt < 0) dt = 0;
-  update(dt);
-  draw();
-  requestAnimationFrame(frame);
-}
-requestAnimationFrame(frame);
-
-/* =====================================================================
-   Start screen, grown-up controls
-   ===================================================================== */
-const startEl = document.getElementById('start');
-let wakeLock = null;
-function begin(e) {
-  if (e) e.preventDefault();
-  initAudio();
-  startEl.classList.add('hidden');
-  lastInteract = T;
-  const de = document.documentElement;
-  try { const r = de.requestFullscreen && de.requestFullscreen({ navigationUI: 'hide' }); if (r && r.catch) r.catch(() => {}); } catch (err) {}
-  try { if (navigator.wakeLock) navigator.wakeLock.request('screen').then(l => { wakeLock = l; }).catch(() => {}); } catch (err) {}
-  setTimeout(() => { SFX.fanfare(); for (let k = 0; k < 3; k++) later(k * 0.2, () => firework(rand(0.2, 0.8) * W, rand(0.15, 0.45) * H, rand(0, 360))); }, 60);
-}
-// On touchscreens Chromium only treats a finger *lift* as a user gesture, so audio
-// and fullscreen are unlocked on pointerup (not pointerdown).
-startEl.addEventListener('pointerdown', (e) => e.preventDefault());
-startEl.addEventListener('pointerup', begin);
-// Safety net: any later gesture also (re)starts audio if the browser suspended it.
-const unlockAudio = () => { if (startEl.classList.contains('hidden')) initAudio(); };
-['pointerup', 'touchend', 'keydown'].forEach(ev => document.addEventListener(ev, unlockAudio, true));
-
-document.addEventListener('visibilitychange', () => {
-  if (!ac) return;
-  if (document.hidden) {
-    ac.suspend();
-    for (const p of pointers.values()) { if (p.voice) p.voice.stop(); if (p.squeak) p.squeak.stop(); p.voice = p.squeak = null; }
-  } else ac.resume();
-});
-
-const lock = document.getElementById('lock');
-const panel = document.getElementById('panel');
-let lockTimer = null, panelIdle = null;
-lock.addEventListener('pointerdown', (e) => {
-  e.preventDefault(); e.stopPropagation();
-  lock.classList.add('holding');
-  clearTimeout(lockTimer);
-  lockTimer = setTimeout(openPanel, 2000);
-});
-['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => lock.addEventListener(ev, () => {
-  clearTimeout(lockTimer); lock.classList.remove('holding');
-}));
-
-function refreshPanel() {
-  panel.querySelectorAll('[data-vol]').forEach(b => b.classList.toggle('on', Math.abs(+b.dataset.vol - settings.volume) < 0.01));
-  panel.querySelectorAll('[data-calm]').forEach(b => b.classList.toggle('on', (+b.dataset.calm === 1) === settings.calm));
-}
-function bumpPanelIdle() { clearTimeout(panelIdle); panelIdle = setTimeout(closePanel, 30000); }
-function openPanel() { lock.classList.remove('holding'); refreshPanel(); panel.hidden = false; bumpPanelIdle(); }
-function closePanel() { panel.hidden = true; clearTimeout(panelIdle); }
-
-panel.addEventListener('pointerdown', (e) => {
-  e.stopPropagation();
-  bumpPanelIdle();
-  const t = e.target.closest('button');
-  if (!t) { if (e.target === panel) closePanel(); return; }
-  e.preventDefault();
-  if (t.dataset.vol != null) { settings.volume = +t.dataset.vol; initAudio(); applyVolume(); saveSettings(); SFX.bell(7); }
-  else if (t.dataset.calm != null) { settings.calm = t.dataset.calm === '1'; applyVolume(); saveSettings(); }
-  else if (t.id === 'toStart') { closePanel(); startEl.classList.remove('hidden'); }
-  else if (t.id === 'closePanel') closePanel();
-  refreshPanel();
-});
-
-// Expose a tiny bit of state for automated testing.
-window.__ttp = { pointers, buddies, shapes, parts, balloons, bubbles, comets, get audio() { return ac; } };
+  // Block pinch-zoom / long-press menus without breaking the links
+  document.addEventListener('gesturestart', (e) => e.preventDefault());
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+  document.addEventListener('touchmove', (e) => { if (e.cancelable && e.touches.length > 1) e.preventDefault(); }, { passive: false });
 })();
 </script>
 </body>
