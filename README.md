@@ -4,8 +4,9 @@ Testing Claude Environments
 ## Tiny Taps: toddler touchscreen games for the Tesla browser
 
 Self-contained web pages built for an ~18-month-old to play with on a car touchscreen. There's nothing
-to install and no external files, and after a page loads it works with no internet. Every sound is made
-in the browser (Web Audio) and the artwork is embedded in the pages.
+to install, and after a page loads it works with no internet. The animal sounds are real recordings in
+the [`sounds/`](sounds) folder; every other sound is made in the browser (Web Audio), and the artwork is
+embedded in the pages.
 
 | Page | What it is |
 | --- | --- |
@@ -40,10 +41,13 @@ Every game has a **Home** link on its start screen and a **Home** button in its 
 **Talking:** if the browser has a text-to-speech voice, it also says "The cow says moo!" after each
 sound. The car's browser may not have a voice; if so, only the animal sounds play.
 
-**About the sounds:** the animal sounds are synthesized cartoon voices (shaped like real moos, barks,
-roars and so on), not recordings. To use real recordings instead, add audio files to the repo and list
-them in the `RECORDINGS` object near the top of the script in `animals.html`, e.g.
-`const RECORDINGS = { cow: 'sounds/cow.mp3' };`. Any animal without a recording keeps its synthesized sound.
+**About the sounds:** each animal plays a short real recording of that animal (see
+[Sound credits](#sound-credits)). The clips are trimmed, small mono MP3s in `sounds/<animal>.mp3`, listed
+in the `RECORDINGS` array near the top of the script in `animals.html`. The page downloads all of them
+as soon as it opens, so after that it keeps working with no internet, and evens out their volume.
+The snake plays a rattlesnake's rattle, the nearest real recording to a hiss that's freely licensed.
+If an animal has no recording, or its file can't be loaded, the game falls back to that animal's
+synthesized cartoon voice, which is still in the code. To swap a sound, replace its MP3 (keep it short).
 
 **Grown-up settings:** hold the lock (top-right) for 2 seconds to get Sound (Off/Low/Medium/High),
 Talking (On/Off), Show animal names (On/Off), Home, Start screen, and Done.
@@ -92,11 +96,59 @@ Calm mode (softer sound, no screen flashes, fewer bubbles), Home, Start screen, 
 ### Hosting (GitHub Pages)
 Turn on **Settings → Pages → Deploy from a branch** for this repository and choose `main` and `/ (root)`.
 The home page will then be at `https://<user>.github.io/<repo>/`. (GitHub Pages on a private repo needs
-a paid GitHub plan. Any static host works, since these are plain HTML files.)
+a paid GitHub plan. Any static host works, since these are plain HTML files; upload the `sounds/` folder
+alongside the pages.)
 
-To try it locally, open `index.html` in any modern browser. A mouse works for single-finger play.
+To try it locally, serve the folder with any web server, e.g. `python3 -m http.server` and then open
+`http://localhost:8000/`. A mouse works for single-finger play. (Opening `index.html` straight from disk
+also works, but browsers block loading the sound files that way, so Animal Sounds falls back to its
+synthesized voices.)
 
 ### Credits
 Animal and icon artwork: [Twemoji](https://github.com/jdecked/twemoji) by Twitter, Inc. and other
 contributors, licensed under [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/).
-All sounds are synthesized in code.
+Animal sound recordings: see [Sound credits](#sound-credits) below. All other sounds are synthesized in code.
+
+#### Sound credits
+The animal recordings come from [SoundBible](https://soundbible.com), [Freesound](https://freesound.org),
+[NOAA Fisheries](https://www.fisheries.noaa.gov/national/science-data/sounds-ocean-mammals) and
+[Wikimedia Commons](https://commons.wikimedia.org). Each one is public domain or under the Creative
+Commons license shown. They were trimmed, mixed down to mono, faded in and out, and re-encoded as MP3.
+
+<!-- sound-credits:start -->
+| Animal | Recording | By | License |
+| --- | --- | --- | --- |
+| Cow | [Cow Moo](https://soundbible.com/1778-Cow-Moo.html) (SoundBible) | Mike Koenig | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| Pig | [Pig Oinking](https://soundbible.com/1220-Pig-Oinking.html) (SoundBible) | Mike Koenig | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| Horse | [Horse Neigh](https://soundbible.com/1296-Horse-Neigh.html) (SoundBible) | Mike Koenig | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| Sheep | [Sheep Bleating](https://soundbible.com/520-Sheep-Bleating.html) (SoundBible) | Mike Koenig | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| Goat | [Goat Bah](https://soundbible.com/619-Goat-Bah.html) (SoundBible) | BlastwaveFx.com | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| Duck | [Mallard Duck Quacking](https://soundbible.com/1862-Mallard-Duck-Quacking.html) (SoundBible) | Mike Koenig | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| Chicken | [Hen Chicken](https://soundbible.com/1022-Hen-Chicken.html) (SoundBible) | Caroline Ford | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| Rooster | [Rooster Crowing](https://soundbible.com/1134-Rooster-Crowing.html) (SoundBible) | Mike Koenig | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| Chick | [Chicks very young](https://freesound.org/people/AGFX/sounds/43380/) (Freesound) | AGFX | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| Turkey | [Turkey Gobble](https://soundbible.com/1737-Turkey-Gobble.html) (SoundBible) | bod | Public domain |
+| Donkey | [Donkey braying close to the market, in Morocco](https://freesound.org/people/felix.blume/sounds/152907/) (Freesound) | felix.blume | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| Goose | [Canadian Geese Honk](https://soundbible.com/1202-Canadian-Geese-Honk.html) (SoundBible) | Tony Phillips | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| Dog | [Labrador Barking Dog](https://soundbible.com/2215-Labrador-Barking-Dog.html) (SoundBible) | Daniel Simion | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| Cat | [Cat Meowing](https://soundbible.com/1290-Cat-Meowing.html) (SoundBible) | Mike Koenig | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| Mouse | [Mice Squeaks](https://freesound.org/people/berboberbo/sounds/727114/) (Freesound) | berboberbo | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| Parrot | [Macaw Parrot screaming in a park](https://freesound.org/people/felix.blume/sounds/504988/) (Freesound) | felix.blume | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| Bird | [Birds After Rain](https://soundbible.com/1827-Birds-After-Rain.html) (SoundBible) | Mike Koenig | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| Bee | [Bee buzzing sound (animal noises).opus](https://commons.wikimedia.org/wiki/File:Bee_buzzing_sound_(animal_noises).opus) (Wikimedia Commons) | Free Sounds Library User Spanac | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| Cricket | [Crickets Chirping At Night](https://soundbible.com/2083-Crickets-Chirping-At-Night.html) (SoundBible) | Lisa Redfern | Public domain |
+| Frog | [Croaking 2x](https://soundbible.com/1340-Croaking-2x.html) (SoundBible) | snottyboy | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| Lion | [Lion Roar](https://soundbible.com/1282-Lion-Roar.html) (SoundBible) | Mike Koenig | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| Tiger | [Tiger Growling](https://soundbible.com/1485-Tiger-Growling.html) (SoundBible) | Mike Koenig | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| Bear | [Bear](https://soundbible.com/1142-Bear.html) (SoundBible) | Mike Koenig | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| Wolf | [Wolf Howling Yipping](https://soundbible.com/2132-Wolf-Howling-Yipping.html) (SoundBible) | Daniel Simon | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| Monkey | [Chimpanzee](https://soundbible.com/1188-Chimpanzee.html) (SoundBible) | Mike Koenig | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| Elephant | [Elephant](https://soundbible.com/1140-Elephant.html) (SoundBible) | Mike Koenig | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| Gorilla | [Gorilla](https://soundbible.com/1149-Gorilla.html) (SoundBible) | unknown | Public domain |
+| Snake | [Rattlesnake Rattle](https://soundbible.com/237-Rattlesnake-Rattle.html) (SoundBible) | U.S. Fish & Wildlife Service (fws.gov) | Public domain |
+| Owl | [Spotted Owl Call](https://soundbible.com/1010-Spotted-Owl-Call.html) (SoundBible) | nps.gov | Public domain |
+| Whale | [Humpback whale song](https://www.fisheries.noaa.gov/national/science-data/sounds-ocean-mammals) (NOAA Fisheries) | NOAA Fisheries Passive Acoustics Group | Public domain |
+| Dolphin | [Common bottlenose dolphin whistles](https://www.fisheries.noaa.gov/national/science-data/sounds-ocean-mammals) (NOAA Fisheries) | NOAA Fisheries Passive Acoustics Group | Public domain |
+| Seal | [Seal Call Zoo](https://soundbible.com/142-Seal-Call-Zoo.html) (SoundBible) | Mike Koenig | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| Penguin | [African penguins at Boulders Beach](https://freesound.org/people/Vortichez/sounds/545415/) (Freesound) | Vortichez | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+<!-- sound-credits:end -->
